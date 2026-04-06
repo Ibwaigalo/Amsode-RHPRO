@@ -3,9 +3,15 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Plus, Play, Download, FileText, TrendingUp, Users, DollarSign, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { Plus, Download, FileText, TrendingUp, Users, DollarSign, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { simulatePayroll, formatXOF } from "@/lib/payroll-engine";
+import dynamic from "next/dynamic";
+
+const PayslipsViewer = dynamic(() => import("./PayslipsViewer"), {
+  loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><div className="bg-white p-6 rounded-lg"><Loader2 className="w-6 h-6 animate-spin" /></div></div>,
+  ssr: false,
+});
 
 const MONTHS_FR = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -28,6 +34,7 @@ interface Props {
 export default function PayrollClient({ periods, employeeCount }: Props) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [viewingPeriod, setViewingPeriod] = useState<{ id: string; label: string } | null>(null);
   const [simSalary, setSimSalary] = useState("300000");
   const simResult = simulatePayroll(parseFloat(simSalary) || 0);
 
@@ -150,10 +157,8 @@ export default function PayrollClient({ periods, employeeCount }: Props) {
                     p.status === "SENT" ? "badge-active" : "badge-pending")}>
                     {p.status === "DRAFT" ? "Brouillon" : p.status === "VALIDATED" ? "Validé" : "Envoyé"}
                   </span>
-                  <button className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Exporter Excel">
-                    <Download className="w-4 h-4" />
-                  </button>
-                  <button className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Voir bulletins">
+                  <button onClick={() => setViewingPeriod({ id: p.id, label: `${MONTHS_FR[p.month]} ${p.year}` })}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Voir bulletins">
                     <FileText className="w-4 h-4" />
                   </button>
                 </div>
@@ -215,6 +220,14 @@ export default function PayrollClient({ periods, employeeCount }: Props) {
           </div>
         </div>
       </div>
+
+      {viewingPeriod && (
+        <PayslipsViewer
+          periodId={viewingPeriod.id}
+          periodLabel={viewingPeriod.label}
+          onClose={() => setViewingPeriod(null)}
+        />
+      )}
     </div>
   );
 }
