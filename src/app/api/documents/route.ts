@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { documents } from "../../../../db/schema";
+import { documents } from "@/lib/schema";
 
 export async function GET() {
   const session = await auth();
@@ -33,14 +33,13 @@ export async function POST(req: NextRequest) {
     const fileUrl = `/uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
     const [doc] = await db.insert(documents).values({
-      name,
-      type,
-      description: description || null,
+      title: name,
+      type: type as any,
       fileUrl,
       fileSize: file.size,
       mimeType: file.type,
       employeeId: employeeId || null,
-      uploadedById: (session.user as any).id,
+      uploadedBy: (session.user as any).id,
     }).returning();
 
     return NextResponse.json(doc, { status: 201 });

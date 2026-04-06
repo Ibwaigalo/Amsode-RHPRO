@@ -1,12 +1,11 @@
 // src/lib/auth.ts
 import NextAuth from "next-auth";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
-import { users, accounts, sessions, verificationTokens } from "@/lib/schema";
+import { users } from "@/lib/schema";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -15,12 +14,6 @@ const loginSchema = z.object({
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
-    sessionsTable: sessions,
-    verificationTokensTable: verificationTokens,
-  }),
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -42,9 +35,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user || !user.password) return null;
+        
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) return null;
-        if (!user.isActive) return null;
+        
+        if (user.isActive === false) return null;
 
         return {
           id: user.id,
@@ -80,7 +75,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
 });
 
-// Role-based access control helpers
 export function hasRole(userRole: string, requiredRole: string): boolean {
   const hierarchy = { ADMIN_RH: 3, MANAGER: 2, EMPLOYEE: 1 };
   return (hierarchy[userRole as keyof typeof hierarchy] || 0) >= (hierarchy[requiredRole as keyof typeof hierarchy] || 0);

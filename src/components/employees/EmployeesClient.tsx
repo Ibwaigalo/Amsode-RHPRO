@@ -6,6 +6,7 @@ import { EmployeesTable } from "./EmployeesTable";
 import { AddEmployeeButton } from "./AddEmployeeButton";
 import { ImportEmployeesButton } from "./ImportEmployeesButton";
 import { EmployeeProfile } from "./EmployeeProfile";
+import { motion } from "framer-motion";
 
 interface Employee {
   id: string;
@@ -40,9 +41,10 @@ interface Props {
   departments: { id: string; name: string; location: string | null }[];
   positions: { id: string; title: string; departmentId: string | null }[];
   userRole: string;
+  managers?: { id: string; firstName: string; lastName: string }[];
 }
 
-export default function EmployeesClient({ employees, departments, positions, userRole }: Props) {
+export default function EmployeesClient({ employees, departments, positions, userRole, managers = [] }: Props) {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [search, setSearch] = useState("");
   const [filterProject, setFilterProject] = useState("");
@@ -87,9 +89,28 @@ export default function EmployeesClient({ employees, departments, positions, use
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <motion.div 
+      className="p-6 space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      <motion.div 
+        className="flex items-center justify-between"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Membres</h1>
           <p className="text-sm text-gray-500 mt-1">Gérez les membres de vos projets</p>
@@ -97,14 +118,25 @@ export default function EmployeesClient({ employees, departments, positions, use
         {(userRole === "ADMIN_RH" || userRole === "MANAGER") && (
           <div className="flex gap-2">
             <ImportEmployeesButton />
-            <AddEmployeeButton departments={departments} />
+            <AddEmployeeButton departments={departments} managers={managers} />
           </div>
         )}
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+          <motion.div 
+            key={stat.label} 
+            variants={itemVariants}
+            className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4"
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ duration: 0.2 }}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">{stat.label}</p>
@@ -114,9 +146,9 @@ export default function EmployeesClient({ employees, departments, positions, use
                 <stat.icon className="w-5 h-5" />
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
         <div className="flex flex-wrap gap-3">
@@ -164,8 +196,8 @@ export default function EmployeesClient({ employees, departments, positions, use
         page={1}
         pageSize={10}
         searchParams={{}}
-        onViewProfile={setSelectedEmployee}
+        onViewProfile={(emp) => setSelectedEmployee(emp as any)}
       />
-    </div>
+    </motion.div>
   );
 }

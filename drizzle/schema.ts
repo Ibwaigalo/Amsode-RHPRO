@@ -3,11 +3,11 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-export const roleEnum = pgEnum('role', ['ADMIN_RH', 'MANAGER', 'EMPLOYE']);
+export const roleEnum = pgEnum('role', ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'PRESIDENT']);
 export const contractTypeEnum = pgEnum('contract_type', ['CDI', 'CDD', 'STAGE', 'CONSULTANT']);
 export const genderEnum = pgEnum('gender', ['M', 'F']);
 export const leaveTypeEnum = pgEnum('leave_type', ['CONGE_PAYE', 'MALADIE', 'MATERNITE', 'PATERNITE', 'SANS_SOLDE', 'AUTRE']);
-export const leaveStatusEnum = pgEnum('leave_status', ['EN_ATTENTE', 'APPROUVE', 'REFUSE', 'ANNULE']);
+export const leaveStatusEnum = pgEnum('leave_status', ['PENDING', 'PENDING_PRESIDENT', 'PENDING_RH', 'APPROVED', 'REJECTED', 'CANCELLED']);
 export const recruitmentStatusEnum = pgEnum('recruitment_status', ['OUVERT', 'EN_COURS', 'FERME', 'ANNULE']);
 export const applicationStatusEnum = pgEnum('application_status', ['RECU', 'SHORTLIST', 'ENTRETIEN', 'OFFRE', 'ACCEPTE', 'REFUSE']);
 export const evaluationStatusEnum = pgEnum('evaluation_status', ['BROUILLON', 'EN_COURS', 'COMPLETE', 'VALIDE']);
@@ -133,7 +133,7 @@ export const leaveRequests = pgTable('leave_requests', {
   endDate: date('end_date').notNull(),
   daysCount: integer('days_count').notNull(),
   reason: text('reason'),
-  status: leaveStatusEnum('status').default('EN_ATTENTE'),
+  status: leaveStatusEnum('status').default('PENDING'),
   approverId: uuid('approver_id').references(() => employees.id),
   approvedAt: timestamp('approved_at'),
   approverNote: text('approver_note'),

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE'] },
@@ -29,36 +30,53 @@ export default function Sidebar({ userRole }: SidebarProps) {
   const visible = navItems.filter(item => item.roles.includes(userRole));
 
   return (
-    <aside className={cn(
-      'flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out',
-      collapsed ? 'w-16' : 'w-64'
-    )}>
+    <motion.aside 
+      className={cn(
+        'flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800',
+        collapsed ? 'w-16' : 'w-64'
+      )}
+      animate={{ width: collapsed ? 64 : 256 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+    >
       {/* Brand */}
       <div className="flex items-center justify-between px-3 py-4 border-b border-gray-200 dark:border-gray-800">
-        {!collapsed ? (
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 shadow-sm bg-white">
+        <AnimatePresence mode="wait">
+          {!collapsed ? (
+            <motion.div 
+              key="expanded"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-3"
+            >
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 shadow-sm bg-white">
+                <img src="/logo.png" alt="AMSODE" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <p className="font-bold text-sm text-[#0090D1]">AMSODE</p>
+                <p className="text-xs text-[#86C440]">RH PRO</p>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="collapsed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-10 h-10 rounded-lg overflow-hidden mx-auto shadow-sm bg-white"
+            >
               <img src="/logo.png" alt="AMSODE" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <p className="font-bold text-sm text-[#0090D1]">AMSODE</p>
-              <p className="text-xs text-[#86C440]">RH PRO</p>
-            </div>
-          </div>
-        ) : (
-          <div className="w-10 h-10 rounded-lg overflow-hidden mx-auto shadow-sm bg-white">
-            <img src="/logo.png" alt="AMSODE" className="w-full h-full object-contain" />
-          </div>
-        )}
-        {!collapsed ? (
-          <button onClick={() => setCollapsed(true)} className="text-gray-400 hover:text-[#0090D1]">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-        ) : (
-          <button onClick={() => setCollapsed(false)} className="flex justify-center py-2 text-gray-400 hover:text-[#0090D1]">
-            <Menu className="w-4 h-4" />
-          </button>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <motion.button 
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-gray-400 hover:text-[#0090D1] p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </motion.button>
       </div>
 
       {/* Navigation */}
@@ -85,7 +103,7 @@ export default function Sidebar({ userRole }: SidebarProps) {
 
       {/* Footer */}
       <div className="p-2 border-t border-gray-200 dark:border-gray-800">
-        <button onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+        <button onClick={() => signOut({ callbackUrl: '/auth/login' })}
           className={cn(
             'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 w-full',
             collapsed && 'justify-center px-2'
@@ -95,6 +113,6 @@ export default function Sidebar({ userRole }: SidebarProps) {
           {!collapsed && <span>Déconnexion</span>}
         </button>
       </div>
-    </aside>
+    </motion.aside>
   );
 }

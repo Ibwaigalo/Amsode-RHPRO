@@ -21,6 +21,7 @@ const employeeSchema = z.object({
   startDate: z.string().min(1, "Date de début requise"),
   endDate: z.string().optional(),
   departmentId: z.string().optional(),
+  managerId: z.string().optional(),
   baseSalary: z.string().min(1, "Salaire requis"),
 });
 
@@ -28,9 +29,10 @@ type EmployeeForm = z.infer<typeof employeeSchema>;
 
 interface Props {
   departments: { id: string; name: string }[];
+  managers: { id: string; firstName: string; lastName: string }[];
 }
 
-export function AddEmployeeButton({ departments }: Props) {
+export function AddEmployeeButton({ departments, managers }: Props) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<EmployeeForm>({
@@ -142,6 +144,14 @@ export function AddEmployeeButton({ departments }: Props) {
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
                   <option value="">Sélectionner</option>
                   {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Supérieur hiérarchique</label>
+                <select {...register("managerId")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  <option value="">Sélectionner</option>
+                  {managers.map((m) => <option key={m.id} value={m.id}>{m.firstName} {m.lastName}</option>)}
                 </select>
               </div>
               <div>

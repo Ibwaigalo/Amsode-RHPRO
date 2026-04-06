@@ -210,7 +210,7 @@ export function TrainingClient({ trainings, employees }: Props) {
                   </p>
                 )}
                 <button className="mt-3 w-full py-1.5 text-xs font-medium text-blue-600 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                  S'inscrire / Voir détails
+                  S&apos;inscrire / Voir détails
                 </button>
               </div>
             );

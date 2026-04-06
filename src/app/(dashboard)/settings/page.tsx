@@ -1,15 +1,24 @@
-"use client";
-// Simple settings page placeholder
-export default function SettingsPage() {
-  return (
-    <div className="p-6 space-y-6">
-      <div>
+import UsersClient from "@/components/settings/UsersClient";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
+export default async function SettingsPage() {
+  const session = await auth();
+  
+  if (!session) {
+    redirect("/auth/login");
+  }
+
+  const userRole = (session.user as any).role;
+  
+  if (userRole !== "ADMIN_RH") {
+    return (
+      <div className="p-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Paramètres</h1>
-        <p className="text-sm text-gray-500 mt-1">Gérez les paramètres de l'application</p>
+        <p className="text-sm text-gray-500 mt-1">Vous n&apos;avez pas accès à cette page.</p>
       </div>
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
-        <p className="text-gray-500">Paramètres en cours de développement...</p>
-      </div>
-    </div>
-  );
+    );
+  }
+
+  return <UsersClient />;
 }

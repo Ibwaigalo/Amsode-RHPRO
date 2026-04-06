@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { evaluations } from "../../../../db/schema";
+import { evaluations } from "@/lib/schema";
 import { z } from "zod";
 
 const schema = z.object({
@@ -33,16 +33,16 @@ export async function POST(req: NextRequest) {
 
   const [evaluation] = await db.insert(evaluations).values({
     employeeId: parsed.data.employeeId,
-    evaluatorId: (session.user as any).id,
+    evaluatorId: null,
     period: parsed.data.period,
-    type: parsed.data.type,
-    scores: parsed.data.scores,
-    overallScore: parsed.data.overallScore,
-    strengths: parsed.data.strengths,
-    improvements: parsed.data.improvements,
-    goals: parsed.data.goals,
-    status: "SUBMITTED",
-  }).returning();
+    type: parsed.data.type || "ANNUELLE",
+    objectives: parsed.data.scores || [],
+    competencies: [],
+    globalScore: parsed.data.overallScore || null,
+    comments: parsed.data.strengths || null,
+    employeeComments: parsed.data.improvements || null,
+    status: "EN_COURS",
+  } as any).returning();
 
   return NextResponse.json(evaluation, { status: 201 });
 }

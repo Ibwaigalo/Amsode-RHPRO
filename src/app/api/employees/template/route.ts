@@ -11,7 +11,7 @@ export async function GET() {
 
   const buffer = generateEmployeeTemplate();
 
-  return new NextResponse(buffer, {
+  return new Response(Buffer.from(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": "attachment; filename=modele_employes.xlsx",

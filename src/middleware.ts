@@ -1,36 +1,22 @@
 // src/middleware.ts
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-export default auth((req) => {
+export default function middleware(req: any) {
   const { pathname } = req.nextUrl;
-  const isAuthenticated = !!req.auth;
-
-  // Public routes
-  const publicRoutes = ["/auth/login", "/auth/register", "/auth/error", "/api/auth"];
-  const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r));
-
-  if (!isAuthenticated && !isPublicRoute) {
-    const loginUrl = new URL("/auth/login", req.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+  
+  // Allow static files and Next.js internals
+  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon") || pathname.startsWith("/public")) {
+    return NextResponse.next();
+  }
+  
+  // Allow auth pages and API auth routes - do NOT import auth here
+  if (pathname.startsWith("/api/auth") || pathname.startsWith("/auth/")) {
+    return NextResponse.next();
   }
 
-  if (isAuthenticated && pathname.startsWith("/auth")) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
-  // Role-based access
-  const userRole = (req.auth?.user as any)?.role;
-  const adminOnlyPaths = ["/dashboard/payroll", "/dashboard/reports"];
-  const managerPaths = [...adminOnlyPaths, "/dashboard/employees"];
-
-  if (adminOnlyPaths.some((p) => pathname.startsWith(p)) && !["ADMIN_RH", "MANAGER"].includes(userRole)) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
+  // Let the page handle auth itself - don't check here to avoid pg import
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [

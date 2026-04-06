@@ -6,7 +6,12 @@ import PayrollClient from "@/components/payroll/PayrollClient";
 export const metadata = { title: "Paie | AMSODE RH" };
 
 async function getData() {
-  const periods = await db.select().from(payrollPeriods);
+  const rawPeriods = await db.select().from(payrollPeriods);
+  const periods = rawPeriods.map(p => ({
+    ...p,
+    status: p.status || "BROUILLON",
+    createdAt: p.createdAt || new Date(),
+  }));
   const employeesList = await db.select().from(employees);
   return { periods, employeeCount: employeesList.length };
 }
@@ -18,7 +23,6 @@ export default async function PayrollPage() {
     <PayrollClient 
       periods={periods}
       employeeCount={employeeCount}
-      userRole={(session?.user as any)?.role || "EMPLOYEE"}
     />
   );
 }

@@ -10,6 +10,7 @@ import { Plus, CheckCircle, XCircle, Clock, Calendar, X, Loader2 } from "lucide-
 import { cn } from "@/lib/utils";
 import { differenceInBusinessDays, parseISO, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { motion, AnimatePresence } from "framer-motion";
 
 const LEAVE_TYPES: Record<string, string> = {
   CONGE_PAYE: "Congés annuels",
@@ -30,10 +31,12 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const STATUS_CONFIG = {
-  EN_ATTENTE: { label: "En attente", icon: Clock, color: "badge-pending" },
-  APPROUVE: { label: "Approuvé", icon: CheckCircle, color: "badge-approved" },
-  REFUSE: { label: "Refusé", icon: XCircle, color: "badge-rejected" },
-  ANNULE: { label: "Annulé", icon: XCircle, color: "bg-gray-100 text-gray-700" },
+  PENDING: { label: "En attente Manager", icon: Clock, color: "badge-pending" },
+  PENDING_PRESIDENT: { label: "En attente Président", icon: Clock, color: "badge-pending" },
+  PENDING_RH: { label: "En attente RH", icon: Clock, color: "badge-pending" },
+  APPROVED: { label: "Approuvé", icon: CheckCircle, color: "badge-approved" },
+  REJECTED: { label: "Refusé", icon: XCircle, color: "badge-rejected" },
+  CANCELLED: { label: "Annulé", icon: XCircle, color: "bg-gray-100 text-gray-700" },
 };
 
 const leaveSchema = z.object({
@@ -49,7 +52,7 @@ interface LeaveRequest {
   leaveType: string;
   startDate: string;
   endDate: string;
-  totalDays: string;
+  totalDays: string | number;
   reason: string | null;
   status: string;
   createdAt: Date;
@@ -69,10 +72,11 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"list" | "calendar">("list");
   const [filterStatus, setFilterStatus] = useState("");
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting }, reset } = useForm<LeaveForm>({
     resolver: zodResolver(leaveSchema),
-    defaultValues: { leaveType: "ANNUAL" },
+    defaultValues: { leaveType: "CONGE_PAYE" },
   });
 
   const startDate = watch("startDate");
@@ -98,35 +102,65 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
     }
   };
 
-  const handleAction = async (id: string, action: "APPROUVE" | "REFUSE") => {
+  const handleAction = async (id: string, action: "approve" | "reject") => {
+    if (loadingAction) return;
+    setLoadingAction(id);
     try {
       const res = await fetch(`/api/leaves/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: action }),
+        body: JSON.stringify({ action }),
       });
       if (!res.ok) throw new Error();
-      toast.success(action === "APPROUVE" ? "Congé approuvé" : "Congé refusé");
+      toast.success(action === "approve" ? "Demande approuvée" : "Demande refusée");
       router.refresh();
     } catch {
       toast.error("Une erreur est survenue");
+    } finally {
+      setLoadingAction(null);
     }
   };
 
   const filtered = filterStatus ? requests.filter(r => r.status === filterStatus) : requests;
-  const pending = requests.filter(r => r.status === "EN_ATTENTE").length;
+  const pending = requests.filter(r => r.status === "PENDING" || r.status === "PENDING_PRESIDENT" || r.status === "PENDING_RH").length;
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
-    <div className="space-y-4">
+    <motion.div 
+      className="space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <motion.div 
+        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {[
-          { label: "En attente", count: requests.filter(r => r.status === "EN_ATTENTE").length, color: "brand" },
-          { label: "Approuvés", count: requests.filter(r => r.status === "APPROUVE").length, color: "green" },
-          { label: "Refusés", count: requests.filter(r => r.status === "REFUSE").length, color: "red" },
+          { label: "En attente", count: pending, color: "brand" },
+          { label: "Approuvés", count: requests.filter(r => r.status === "APPROVED").length, color: "green" },
+          { label: "Refusés", count: requests.filter(r => r.status === "REJECTED").length, color: "red" },
           { label: "Total", count: requests.length, color: "brand" },
         ].map((item, i) => (
-          <div key={i} className="stat-card text-center">
+          <motion.div 
+            key={i} 
+            variants={itemVariants}
+            className="stat-card text-center"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+          >
             <p className={cn("text-2xl font-bold font-outfit",
               item.color === "amber" ? "text-amber-500" :
               item.color === "green" ? "text-green-600" :
@@ -134,14 +168,14 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
               {item.count}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">{item.label}</p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          {["", "EN_ATTENTE", "APPROUVE", "REFUSE"].map((s) => (
+          {["", "PENDING", "PENDING_PRESIDENT", "PENDING_RH", "APPROVED", "REJECTED"].map((s) => (
             <button key={s}
               onClick={() => setFilterStatus(s)}
               className={cn("text-xs px-3 py-1.5 rounded-full font-medium transition-colors",
@@ -162,14 +196,20 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
       </div>
 
       {/* Leave request form */}
-      {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-blue-200 dark:border-blue-800 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white">Nouvelle demande de congé</h3>
-            <button onClick={() => setShowForm(false)}>
-              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-            </button>
-          </div>
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="bg-white dark:bg-gray-900 rounded-xl border border-blue-200 dark:border-blue-800 p-5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Nouvelle demande de congé</h3>
+              <button onClick={() => setShowForm(false)}>
+                <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
           <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type de congé</label>
@@ -217,11 +257,17 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
               </button>
             </div>
           </form>
-        </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Requests table */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+      <motion.div 
+        className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full data-table">
             <thead>
@@ -238,7 +284,7 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
               {filtered.length === 0 ? (
                 <tr><td colSpan={6} className="text-center py-10 text-gray-400 text-sm">Aucune demande</td></tr>
               ) : filtered.map((req) => {
-                const statusCfg = STATUS_CONFIG[req.status as keyof typeof STATUS_CONFIG];
+                const statusCfg = STATUS_CONFIG[req.status as keyof typeof STATUS_CONFIG] || { label: req.status, color: "bg-gray-100 text-gray-700" };
                 return (
                   <tr key={req.id}>
                     <td>
@@ -267,17 +313,23 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
                         {statusCfg.label}
                       </span>
                     </td>
-                    {["ADMIN_RH", "MANAGER"].includes(userRole) && (
+                      {["ADMIN_RH", "MANAGER", "PRESIDENT"].includes(userRole) && (
                       <td>
-                        {req.status === "EN_ATTENTE" && (
+                        {["PENDING", "PENDING_PRESIDENT", "PENDING_RH"].includes(req.status) && (
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => handleAction(req.id, "APPROVED")}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                              <CheckCircle className="w-4 h-4" />
+                            <button 
+                              onClick={() => handleAction(req.id, "approve")}
+                              disabled={loadingAction === req.id}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors disabled:opacity-50"
+                            >
+                              {loadingAction === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                             </button>
-                            <button onClick={() => handleAction(req.id, "REJECTED")}
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                              <XCircle className="w-4 h-4" />
+                            <button 
+                              onClick={() => handleAction(req.id, "reject")}
+                              disabled={loadingAction === req.id}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                            >
+                              {loadingAction === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                             </button>
                           </div>
                         )}
@@ -289,7 +341,7 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

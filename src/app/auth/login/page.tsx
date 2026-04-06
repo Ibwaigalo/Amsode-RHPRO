@@ -23,12 +23,18 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: Form) => {
+    console.log("Submitting login for:", data.email);
+    
     const res = await signIn("credentials", {
       email: data.email,
       password: data.password,
       redirect: false,
     });
+    
+    console.log("Login response:", res);
+    
     if (res?.error) {
+      console.error("Login error:", res.error);
       toast.error("Email ou mot de passe incorrect");
     } else {
       toast.success("Connexion réussie !");

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { payslips, employees, departments, positions, payrollPeriods, organizationSettings } from "../../../../../../db/schema";
+import { payslips, employees, departments, positions, payrollPeriods, orgSettings } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { generatePayslipPDF } from "@/lib/pdf-generator";
 
@@ -19,12 +19,15 @@ export async function GET(
       baseSalary: payslips.baseSalary,
       transportAllowance: payslips.transportAllowance,
       housingAllowance: payslips.housingAllowance,
+      mealAllowance: payslips.mealAllowance,
       performanceBonus: payslips.performanceBonus,
-      otherAllowances: payslips.otherAllowances,
+      otherBonuses: payslips.otherBonuses,
       grossSalary: payslips.grossSalary,
       cnssEmployee: payslips.cnssEmployee,
-      incomeTax: payslips.incomeTax,
-      totalDeductions: payslips.totalDeductions,
+      cnssEmployer: payslips.cnssEmployer,
+      imuEmployee: payslips.imuEmployee,
+      advanceDeduction: payslips.advanceDeduction,
+      otherDeductions: payslips.otherDeductions,
       netSalary: payslips.netSalary,
       month: payrollPeriods.month,
       year: payrollPeriods.year,
@@ -47,38 +50,42 @@ export async function GET(
 
   if (!payslip) return NextResponse.json({ error: "Bulletin introuvable" }, { status: 404 });
 
-  const [orgSettings] = await db.select().from(organizationSettings).limit(1);
+  const orgSettingsRecords = await db.select().from(orgSettings).limit(1);
+  const orgMap: Record<string, string> = {};
+  orgSettingsRecords.forEach((s) => {
+    if (s.key && s.value) orgMap[s.key] = s.value;
+  });
 
   const pdfBytes = await generatePayslipPDF({
     employee: {
       name: `${payslip.firstName} ${payslip.lastName}`,
       position: payslip.positionTitle || "—",
       department: payslip.departmentName || "—",
-      employeeNumber: payslip.employeeNumber,
-      contractType: payslip.contractType,
+      employeeNumber: payslip.employeeNumber || "",
+      contractType: payslip.contractType || "CDI",
     },
     period: { month: payslip.month, year: payslip.year },
     payroll: {
-      baseSalary: parseFloat(payslip.baseSalary),
-      transportAllowance: parseFloat(payslip.transportAllowance || "0"),
-      housingAllowance: parseFloat(payslip.housingAllowance || "0"),
-      performanceBonus: parseFloat(payslip.performanceBonus || "0"),
-      otherAllowances: parseFloat(payslip.otherAllowances || "0"),
-      grossSalary: parseFloat(payslip.grossSalary),
-      cnssEmployee: parseFloat(payslip.cnssEmployee || "0"),
-      incomeTax: parseFloat(payslip.incomeTax || "0"),
-      totalDeductions: parseFloat(payslip.totalDeductions),
-      netSalary: parseFloat(payslip.netSalary),
+      baseSalary: parseFloat(payslip.baseSalary as string),
+      transportAllowance: parseFloat((payslip.transportAllowance as string) || "0"),
+      housingAllowance: parseFloat((payslip.housingAllowance as string) || "0"),
+      performanceBonus: parseFloat((payslip.performanceBonus as string) || "0"),
+      otherAllowances: parseFloat((payslip.otherBonuses as string) || "0"),
+      grossSalary: parseFloat(payslip.grossSalary as string),
+      cnssEmployee: parseFloat((payslip.cnssEmployee as string) || "0"),
+      incomeTax: parseFloat((payslip.imuEmployee as string) || "0"),
+      totalDeductions: parseFloat((payslip.otherDeductions as string) || "0"),
+      netSalary: parseFloat(payslip.netSalary as string),
     },
     organization: {
-      name: orgSettings?.name || "AMSODE",
-      address: orgSettings?.address || undefined,
-      cnssNumber: orgSettings?.cnssNumber || undefined,
-      presidentName: orgSettings?.presidentName || undefined,
+      name: orgMap["org_name"] || "AMSODE",
+      address: orgMap["org_address"] || undefined,
+      cnssNumber: orgMap["cnss_number"] || undefined,
+      presidentName: orgMap["president_name"] || undefined,
     },
   });
 
-  return new NextResponse(pdfBytes, {
+  return new Response(Buffer.from(pdfBytes), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="bulletin-${payslip.employeeNumber}-${payslip.month}-${payslip.year}.pdf"`,

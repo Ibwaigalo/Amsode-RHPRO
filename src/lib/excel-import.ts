@@ -15,12 +15,36 @@ export interface EmployeeImportRow {
   departmentId?: string;
   positionId?: string;
   baseSalary: string;
+  managerId?: string;
 }
 
 export interface ImportResult {
   success: number;
   errors: { row: number; message: string }[];
   employees: EmployeeImportRow[];
+}
+
+function parseDate(value: any): string | undefined {
+  if (!value) return undefined;
+  
+  const strValue = String(value).trim();
+  
+  if (/^\d+$/.test(strValue)) {
+    const excelDate = parseInt(strValue);
+    if (excelDate > 20000 && excelDate < 60000) {
+      const date = new Date((excelDate - 25569) * 86400 * 1000);
+      return date.toISOString().substring(0, 10);
+    }
+  }
+  
+  if (strValue.includes('-') || strValue.includes('/')) {
+    const match = strValue.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (match) {
+      return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+    }
+  }
+  
+  return strValue.substring(0, 10);
 }
 
 export function parseExcelFile(file: Buffer): ImportResult {
@@ -66,6 +90,8 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "Salaire": "baseSalary",
     "baseSalary": "baseSalary",
     "Salaire de base": "baseSalary",
+    "Supérieur Hiérarchique": "managerId",
+    "managerId": "managerId",
   };
 
   json.forEach((row: any, index: number) => {
@@ -105,16 +131,17 @@ export function parseExcelFile(file: Buffer): ImportResult {
         workEmail: normalizedRow.workEmail ? String(normalizedRow.workEmail).trim() : undefined,
         phone: normalizedRow.phone ? String(normalizedRow.phone).trim() : undefined,
         cin: normalizedRow.cin ? String(normalizedRow.cin).trim() : undefined,
-        dateOfBirth: normalizedRow.dateOfBirth ? String(normalizedRow.dateOfBirth).substring(0, 10) : undefined,
+        dateOfBirth: parseDate(normalizedRow.dateOfBirth),
         gender: normalizedRow.gender && ["M", "F"].includes(String(normalizedRow.gender).toUpperCase()) 
           ? String(normalizedRow.gender).toUpperCase() as "M" | "F" 
           : undefined,
         contractType: normalizedRow.contractType as "CDI" | "CDD" | "STAGE" | "CONSULTANT",
-        startDate: String(normalizedRow.startDate).substring(0, 10),
-        endDate: normalizedRow.endDate ? String(normalizedRow.endDate).substring(0, 10) : undefined,
+        startDate: parseDate(normalizedRow.startDate) || "",
+        endDate: parseDate(normalizedRow.endDate) || undefined,
         departmentId: normalizedRow.departmentId ? String(normalizedRow.departmentId) : undefined,
         positionId: normalizedRow.positionId ? String(normalizedRow.positionId) : undefined,
         baseSalary: String(normalizedRow.baseSalary),
+        managerId: normalizedRow.managerId ? String(normalizedRow.managerId).trim() : undefined,
       });
     } catch (e: any) {
       errors.push({ row: index + 2, message: e.message });
@@ -141,6 +168,7 @@ export function generateEmployeeTemplate(): Buffer {
       "Poste": "",
       "Zone": "Bamako",
       "Salaire de base": "250000",
+      "Supérieur Hiérarchique": "",
     },
     {
       "Prénom": "Mamadou",
@@ -157,6 +185,7 @@ export function generateEmployeeTemplate(): Buffer {
       "Poste": "",
       "Zone": "Kayes",
       "Salaire de base": "300000",
+      "Supérieur Hiérarchique": "",
     },
   ];
 

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { trainings } from "../../../../db/schema";
+import { trainings } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -19,7 +19,7 @@ const schema = z.object({
 });
 
 export async function GET() {
-  const list = await db.select().from(trainings).where(eq(trainings.isActive, true));
+  const list = await db.select().from(trainings);
   return NextResponse.json(list);
 }
 
@@ -36,8 +36,7 @@ export async function POST(req: NextRequest) {
 
   const [training] = await db.insert(trainings).values({
     ...parsed.data,
-    isActive: true,
-  }).returning();
+  } as any).returning();
 
   return NextResponse.json(training, { status: 201 });
 }

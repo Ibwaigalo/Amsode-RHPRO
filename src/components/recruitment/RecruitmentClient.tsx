@@ -105,7 +105,7 @@ export default function RecruitmentClient({ postings, departments }: Props) {
       {showForm && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-[#0090D1]/30 dark:border-[#0090D1]/50 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white">Nouvelle offre d'emploi</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">Nouvelle offre d&apos;emploi</h3>
             <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-gray-400" /></button>
           </div>
           <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -161,7 +161,7 @@ export default function RecruitmentClient({ postings, departments }: Props) {
               <button type="submit" disabled={isSubmitting}
                 className="flex items-center gap-2 px-4 py-2 bg-[#0090D1] text-white text-sm font-medium rounded-lg hover:bg-[#007ab8] transition-all disabled:opacity-60 shadow-md shadow-[#0090D1]/20">
                 {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Publier l'offre
+                Publier l&apos;offre
               </button>
             </div>
           </form>

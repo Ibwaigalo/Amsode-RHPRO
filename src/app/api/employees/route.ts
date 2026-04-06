@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { employees } from "@/lib/schema";
+import { employees, users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -20,6 +20,7 @@ const createSchema = z.object({
   endDate: z.string().optional(),
   departmentId: z.string().uuid().optional(),
   positionId: z.string().uuid().optional(),
+  managerId: z.string().uuid().optional(),
   baseSalary: z.string(),
 });
 
@@ -33,8 +34,62 @@ export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const list = await db.select().from(employees).where(eq(employees.isActive, true));
-  return NextResponse.json(list);
+  const role = (session.user as any).role;
+  const userId = (session.user as any).id;
+  const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
+
+  let list: any[] = [];
+
+  if (role === "ADMIN_RH" || role === "PRESIDENT") {
+    list = await db.select().from(employees).where(eq(employees.isActive, true));
+  } else if (role === "MANAGER" && user?.employeeId) {
+    list = await db.select().from(employees).where(
+      eq(employees.managerId, user.employeeId)
+    );
+  } else if (user?.employeeId) {
+    list = await db.select().from(employees).where(eq(employees.id, user.employeeId));
+  } else {
+    list = [];
+  }
+  
+  const managerIds = [...new Set(list.map(emp => emp.managerId).filter(Boolean))];
+  let managerMap = new Map();
+  if (managerIds.length > 0) {
+    const managers = await db.select({
+      id: employees.id,
+      firstName: employees.firstName,
+      lastName: employees.lastName,
+    }).from(employees).where(
+      managerIds.length === 1 
+        ? eq(employees.id, managerIds[0])
+        : eq(employees.id, managerIds[0] as any)
+    );
+    for (const m of managers) {
+      managerMap.set(m.id, m);
+    }
+  }
+  
+  const listWithManager = list.map((emp) => {
+    const manager = emp.managerId ? managerMap.get(emp.managerId) : null;
+    
+    if (role === "EMPLOYE") {
+      return {
+        id: emp.id,
+        employeeNumber: emp.employeeNumber,
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        workEmail: emp.workEmail,
+        departmentId: emp.departmentId,
+        positionId: emp.positionId,
+        manager,
+        isActive: emp.isActive,
+      };
+    }
+    
+    return { ...emp, manager };
+  });
+  
+  return NextResponse.json(listWithManager);
 }
 
 export async function POST(req: NextRequest) {
@@ -69,6 +124,7 @@ export async function POST(req: NextRequest) {
     endDate: data.endDate,
     departmentId: data.departmentId,
     positionId: data.positionId,
+    managerId: data.managerId || null,
     baseSalary: data.baseSalary,
     isActive: true,
   }).returning();

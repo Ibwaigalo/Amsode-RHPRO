@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { jobPostings } from "../../../../db/schema";
+import { jobPostings } from "@/lib/schema";
 import { z } from "zod";
 
 const schema = z.object({
@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
 
   const [posting] = await db.insert(jobPostings).values({
     ...parsed.data,
-    createdById: (session.user as any).id,
-    status: "OPEN",
-  }).returning();
+    createdBy: (session.user as any).id,
+    status: "OUVERT",
+  } as any).returning();
 
   return NextResponse.json(posting, { status: 201 });
 }

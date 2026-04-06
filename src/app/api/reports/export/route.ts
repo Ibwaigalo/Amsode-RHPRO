@@ -2,12 +2,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { employees, payslips, leaveRequests, departments, positions } from "../../../../../db/schema";
+import { employees, payslips, leaveRequests, departments, positions } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  
+  const role = (session.user as any).role;
+  if (!["ADMIN_RH", "PRESIDENT"].includes(role)) {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") || "employees";
@@ -22,13 +27,13 @@ export async function GET(req: NextRequest) {
         matricule: employees.employeeNumber,
         prenom: employees.firstName,
         nom: employees.lastName,
-        email: employees.email,
+        email: employees.workEmail,
         telephone: employees.phone,
         departement: departments.name,
         poste: positions.title,
         contrat: employees.contractType,
-        debut: employees.contractStart,
-        fin: employees.contractEnd,
+        debut: employees.startDate,
+        fin: employees.endDate,
         salaire: employees.baseSalary,
         statut: employees.isActive,
       })
@@ -40,14 +45,14 @@ export async function GET(req: NextRequest) {
       Matricule: d.matricule,
       Prénom: d.prenom,
       Nom: d.nom,
-      Email: d.email,
+      Email: d.email || "",
       Téléphone: d.telephone || "",
       Département: d.departement || "",
       Poste: d.poste || "",
       Contrat: d.contrat,
       "Début contrat": d.debut,
       "Fin contrat": d.fin || "",
-      "Salaire base (FCFA)": parseFloat(d.salaire),
+      "Salaire base (FCFA)": parseFloat(d.salaire as string),
       Statut: d.statut ? "Actif" : "Inactif",
     }));
 
@@ -61,7 +66,7 @@ export async function GET(req: NextRequest) {
         type: leaveRequests.leaveType,
         debut: leaveRequests.startDate,
         fin: leaveRequests.endDate,
-        jours: leaveRequests.totalDays,
+        jours: leaveRequests.daysCount,
         statut: leaveRequests.status,
         motif: leaveRequests.reason,
       })
@@ -73,8 +78,8 @@ export async function GET(req: NextRequest) {
       Nom: d.prenom || "",
       "Type de congé": d.type,
       "Date début": d.debut,
-      "Date fin": d.fin,
-      "Nombre de jours": parseFloat(d.jours),
+      "Date fin": d.fin || "",
+      "Jours": typeof d.jours === 'string' ? parseFloat(d.jours) || 0 : d.jours || 0,
       Statut: d.statut,
       Motif: d.motif || "",
     }));

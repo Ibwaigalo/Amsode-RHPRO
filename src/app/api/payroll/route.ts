@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { payrollPeriods, payslips, employees, departments, positions } from "../../../../db/schema";
+import { payrollPeriods, payslips, employees, departments, positions } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { calculatePayroll } from "@/lib/payroll-engine";
 import { generatePayslipPDF } from "@/lib/pdf-generator";
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const role = (session.user as any).role;
-  if (!["ADMIN_RH", "MANAGER"].includes(role)) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (!["ADMIN_RH", "PRESIDENT"].includes(role)) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const periods = await db.select().from(payrollPeriods).orderBy(payrollPeriods.year, payrollPeriods.month);
   return NextResponse.json(periods);
@@ -68,11 +68,16 @@ export async function POST(req: NextRequest) {
       periodId: period.id,
       employeeId: emp.id,
       baseSalary: String(calc.baseSalary),
+      transportAllowance: "0",
+      housingAllowance: "0",
+      performanceBonus: "0",
+      otherBonuses: "0",
       grossSalary: String(calc.grossSalary),
       cnssEmployee: String(calc.cnssEmployee),
       cnssEmployer: String(calc.cnssEmployer),
-      incomeTax: String(calc.incomeTax),
-      totalDeductions: String(calc.totalDeductions),
+      imuEmployee: "0",
+      advanceDeduction: "0",
+      otherDeductions: String(calc.totalDeductions),
       netSalary: String(calc.netSalary),
     });
   }

@@ -186,7 +186,7 @@ export function PerformanceClient({ evaluations, employees }: Props) {
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
                   <option value="ANNUAL">Annuelle</option>
                   <option value="QUARTERLY">Trimestrielle</option>
-                  <option value="PROBATION">Fin de période d'essai</option>
+                  <option value="PROBATION">Fin de période d&apos;essai</option>
                   <option value="360">Évaluation 360°</option>
                 </select>
               </div>
@@ -194,7 +194,7 @@ export function PerformanceClient({ evaluations, employees }: Props) {
 
             {/* Criteria scores */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Critères d'évaluation</h4>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Critères d&apos;évaluation</h4>
               <div className="space-y-3">
                 {CRITERIA.map((c) => (
                   <div key={c.key} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
@@ -220,7 +220,7 @@ export function PerformanceClient({ evaluations, employees }: Props) {
                 {errors.strengths && <p className="text-xs text-red-500 mt-1">{errors.strengths.message}</p>}
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Axes d'amélioration *</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Axes d&apos;amélioration *</label>
                 <textarea {...register("improvements")} rows={3}
                   placeholder="Domaines à améliorer..."
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1] resize-none" />
@@ -234,7 +234,7 @@ export function PerformanceClient({ evaluations, employees }: Props) {
               <button type="submit" disabled={isSubmitting}
                 className="flex items-center gap-2 px-4 py-2 bg-[#0090D1] text-white text-sm font-medium rounded-lg hover:bg-[#007ab8] transition-all disabled:opacity-60 shadow-md shadow-[#0090D1]/20">
                 {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Enregistrer l'évaluation
+                Enregistrer l&apos;évaluation
               </button>
             </div>
           </form>

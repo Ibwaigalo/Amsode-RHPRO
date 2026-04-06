@@ -2,13 +2,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { employees } from "@/lib/schema";
+import { employees, departments, positions } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import { parseExcelFile, EmployeeImportRow } from "@/lib/excel-import";
 
 function generateEmployeeNumber(): string {
   const year = new Date().getFullYear().toString().slice(-2);
   const rand = Math.floor(Math.random() * 9000) + 1000;
   return `AMS-${year}-${rand}`;
+}
+
+async function getOrCreateDepartment(name: string): Promise<string | null> {
+  if (!name) return null;
+  const existing = await db.select().from(departments).where(eq(departments.name, name)).limit(1);
+  if (existing.length > 0) return existing[0].id;
+  const [created] = await db.insert(departments).values({ name, code: name.substring(0, 10).toUpperCase() }).returning();
+  return created.id;
+}
+
+async function getOrCreatePosition(title: string, departmentId?: string): Promise<string | null> {
+  if (!title) return null;
+  const existing = await db.select().from(positions).where(eq(positions.title, title)).limit(1);
+  if (existing.length > 0) return existing[0].id;
+  const [created] = await db.insert(positions).values({ title, departmentId: departmentId || undefined }).returning();
+  return created.id;
 }
 
 export async function POST(req: NextRequest) {
@@ -47,9 +64,26 @@ export async function POST(req: NextRequest) {
     const created: any[] = [];
     const failed: { row: number; message: string }[] = [...result.errors];
 
+    const employeeMap: Record<string, string> = {};
+    const departmentMap: Record<string, string> = {};
+
     for (let i = 0; i < result.employees.length; i++) {
       const emp = result.employees[i];
       try {
+        let departmentId: string | undefined = undefined;
+        if (emp.departmentId && !departmentMap[emp.departmentId]) {
+          const deptId = await getOrCreateDepartment(emp.departmentId);
+          departmentMap[emp.departmentId] = deptId || "";
+        }
+        if (emp.departmentId && departmentMap[emp.departmentId]) {
+          departmentId = departmentMap[emp.departmentId] || undefined;
+        }
+
+        let positionId: string | undefined = undefined;
+        if (emp.positionId && !/^[0-9a-f-]{36}$/i.test(emp.positionId)) {
+          positionId = await getOrCreatePosition(emp.positionId, departmentId) || undefined;
+        }
+
         const [newEmployee] = await db.insert(employees).values({
           employeeNumber: generateEmployeeNumber(),
           firstName: emp.firstName,
@@ -62,14 +96,27 @@ export async function POST(req: NextRequest) {
           contractType: emp.contractType,
           startDate: emp.startDate,
           endDate: emp.endDate || null,
-          departmentId: emp.departmentId || null,
-          positionId: emp.positionId || null,
+          departmentId: departmentId || null,
+          positionId: positionId || null,
           baseSalary: emp.baseSalary,
           isActive: true,
         }).returning();
+        
+        if (emp.managerId) {
+          employeeMap[emp.managerId] = newEmployee.id;
+        }
         created.push(newEmployee);
       } catch (e: any) {
         failed.push({ row: i + 2, message: `${emp.firstName} ${emp.lastName}: ${e.message}` });
+      }
+    }
+
+    for (const emp of result.employees) {
+      if (emp.managerId && employeeMap[emp.managerId]) {
+        const empToUpdate = created.find(e => e.firstName === emp.firstName && e.lastName === emp.lastName);
+        if (empToUpdate) {
+          await db.update(employees).set({ managerId: employeeMap[emp.managerId] }).where(eq(employees.id, empToUpdate.id));
+        }
       }
     }
 
