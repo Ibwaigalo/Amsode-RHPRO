@@ -56,7 +56,7 @@ export default function LoginPage() {
               <img src="/logo.png" alt="AMSODE" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-white font-outfit">AMSODE RH PRO</h1>
-            <p className="text-white/80 text-sm mt-1">Aide Médicale et Sociale pour le Développement</p>
+            <p className="text-white/80 text-sm mt-1">Plateforme réservés uniquement au personnel AMSODE</p>
           </div>
 
           <div className="px-8 py-8">
