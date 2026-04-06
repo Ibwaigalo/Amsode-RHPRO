@@ -81,6 +81,7 @@ export function PerformanceClient({ evaluations, employees }: Props) {
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting }, reset } = useForm<EvalForm>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: { quality: 3, productivity: 3, teamwork: 3, initiative: 3, communication: 3, type: "ANNUAL" },
   });
 

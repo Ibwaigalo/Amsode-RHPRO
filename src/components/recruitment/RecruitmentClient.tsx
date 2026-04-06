@@ -55,6 +55,7 @@ export default function RecruitmentClient({ postings, departments }: Props) {
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<JobForm>({
     resolver: zodResolver(jobSchema),
+    mode: "onBlur",
     defaultValues: { contractType: "CDI" },
   });
 

@@ -3,10 +3,42 @@
 import { useState } from "react";
 import { Users, TrendingUp, Calendar, Briefcase } from "lucide-react";
 import { EmployeesTable } from "./EmployeesTable";
-import { AddEmployeeButton } from "./AddEmployeeButton";
-import { ImportEmployeesButton } from "./ImportEmployeesButton";
-import { EmployeeProfile } from "./EmployeeProfile";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+const AddEmployeeButton = dynamic(
+  () => import("./AddEmployeeButton").then(m => m.AddEmployeeButton),
+  { 
+    loading: () => <div className="px-4 py-2 bg-[#0090D1] rounded-lg animate-pulse h-9 w-32" />,
+    ssr: false 
+  }
+);
+
+const ImportEmployeesButton = dynamic(
+  () => import("./ImportEmployeesButton").then(m => m.ImportEmployeesButton),
+  { 
+    loading: () => <div className="px-4 py-2 bg-green-600 rounded-lg animate-pulse h-9 w-28" />,
+    ssr: false 
+  }
+);
+
+const EmployeeProfile = dynamic(
+  () => import("./EmployeeProfile").then(m => m.EmployeeProfile),
+  { 
+    loading: () => <div className="p-6 animate-pulse"><div className="h-8 bg-gray-200 rounded w-48 mb-4"></div><div className="h-64 bg-gray-100 rounded"></div></div>,
+    ssr: false 
+  }
+);
+
+const EditEmployeeModal = dynamic(
+  () => import("./EditEmployeeModal").then(m => m.EditEmployeeModal),
+  { 
+    loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><div className="bg-white p-6 rounded-lg">Chargement...</div></div>,
+    ssr: false 
+  }
+);
 
 interface Employee {
   id: string;
@@ -33,7 +65,10 @@ interface Employee {
   emergencyContact: string | null;
   emergencyPhone: string | null;
   department?: { id: string; name: string; location: string | null };
+  departmentId?: string | null;
   position?: { id: string; title: string };
+  positionId?: string | null;
+  managerId?: string | null;
 }
 
 interface Props {
@@ -46,10 +81,12 @@ interface Props {
 
 export default function EmployeesClient({ employees, departments, positions, userRole, managers = [] }: Props) {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [search, setSearch] = useState("");
   const [filterProject, setFilterProject] = useState("");
   const [filterPosition, setFilterPosition] = useState("");
   const [filterZone, setFilterZone] = useState("");
+  const router = useRouter();
 
   const zones = [...new Set(employees.map(e => e.zone).filter(Boolean))] as string[];
 
@@ -59,8 +96,8 @@ export default function EmployeesClient({ employees, departments, positions, use
       emp.employeeNumber.toLowerCase().includes(search.toLowerCase()) ||
       (emp.workEmail?.toLowerCase().includes(search.toLowerCase()));
     
-    const matchesProject = !filterProject || emp.department?.id === filterProject;
-    const matchesPosition = !filterPosition || emp.position?.id === filterPosition;
+    const matchesProject = !filterProject || emp.department?.id === filterProject || emp.departmentId === filterProject;
+    const matchesPosition = !filterPosition || emp.position?.id === filterPosition || emp.positionId === filterPosition;
     const matchesZone = !filterZone || emp.zone === filterZone;
 
     return matchesSearch && matchesProject && matchesPosition && matchesZone;
@@ -88,6 +125,51 @@ export default function EmployeesClient({ employees, departments, positions, use
       />
     );
   }
+
+  if (editingEmployee) {
+    return (
+      <EditEmployeeModal
+        employee={editingEmployee}
+        departments={departments}
+        positions={positions}
+        managers={managers}
+        onClose={() => setEditingEmployee(null)}
+        onSuccess={() => {
+          setEditingEmployee(null);
+          router.refresh();
+        }}
+      />
+    );
+  }
+
+  const handleEdit = (employee: Employee) => {
+    setEditingEmployee(employee);
+  };
+
+  const handleDelete = async (employee: Employee) => {
+    if (!confirm(`Voulez-vous vraiment supprimer ${employee.firstName} ${employee.lastName} ?`)) {
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/employees/${employee.id}`, { 
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" }
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast.error(data.error || "Erreur lors de la suppression");
+        return;
+      }
+      
+      toast.success("Membre supprimé avec succès");
+      router.refresh();
+    } catch (e: any) {
+      toast.error("Erreur: " + (e.message || "Une erreur est survenue"));
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -196,7 +278,9 @@ export default function EmployeesClient({ employees, departments, positions, use
         page={1}
         pageSize={10}
         searchParams={{}}
-        onViewProfile={(emp) => setSelectedEmployee(emp as any)}
+        onViewProfile={(emp: any) => setSelectedEmployee(emp)}
+        onEdit={(emp: any) => handleEdit(emp)}
+        onDelete={(emp: any) => handleDelete(emp)}
       />
     </motion.div>
   );

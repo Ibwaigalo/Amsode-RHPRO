@@ -2,7 +2,12 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { leaveRequests, employees, users } from "@/lib/schema";
 import { eq, or } from "drizzle-orm";
-import LeavesClient from "@/components/leaves/LeavesClient";
+import dynamic from "next/dynamic";
+
+const LeavesClient = dynamic(() => import("@/components/leaves/LeavesClient"), {
+  loading: () => <div className="p-6"><div className="animate-pulse space-y-4"><div className="h-32 bg-gray-200 rounded"></div><div className="h-64 bg-gray-200 rounded"></div></div></div>,
+  ssr: false,
+});
 
 export const metadata = { title: "Congés | AMSODE RH" };
 export const revalidate = 15;

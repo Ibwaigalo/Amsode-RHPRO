@@ -20,6 +20,7 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
   });
 
   const onSubmit = async (data: Form) => {

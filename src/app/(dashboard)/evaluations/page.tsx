@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { eq, desc } from "drizzle-orm";
 import { evaluations, employees } from "@/lib/schema";
-import { PerformanceClient } from "@/components/performance/PerformanceClient";
+import dynamic from "next/dynamic";
+
+const PerformanceClient = dynamic(() => import("@/components/performance/PerformanceClient").then(m => m.PerformanceClient), {
+  loading: () => <div className="animate-pulse space-y-4"><div className="h-32 bg-gray-200 rounded"></div><div className="h-64 bg-gray-200 rounded"></div></div>,
+  ssr: false,
+});
 
 export default async function EvaluationsPage() {
   const session = await auth();

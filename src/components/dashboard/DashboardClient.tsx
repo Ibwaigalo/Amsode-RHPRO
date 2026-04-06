@@ -1,7 +1,17 @@
 'use client';
 import { Users, Calendar, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { DashboardCharts } from './DashboardCharts';
+import dynamic from 'next/dynamic';
+
+const DashboardCharts = dynamic(
+  () => import('./DashboardCharts').then(m => ({ default: m.DashboardCharts })),
+  {
+    loading: () => (
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 h-64 animate-pulse" />
+    ),
+    ssr: false,
+  }
+);
 
 interface Stats { activeEmployees: number; pendingLeaves: number; openJobs?: number; pendingEvals?: number; teamCount?: number; teamLeaves?: number; myLeaves?: number; }
 

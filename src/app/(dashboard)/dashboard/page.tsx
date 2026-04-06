@@ -3,6 +3,21 @@ import { db } from '@/lib/db';
 import { employees, leaveRequests, users, departments } from '@/lib/schema';
 import { eq, count, or, and, sql, sum } from 'drizzle-orm';
 import DashboardClient from '../../../components/dashboard/DashboardClient';
+import dynamic from 'next/dynamic';
+
+const DashboardCharts = dynamic(
+  () => import('../../../components/dashboard/DashboardCharts').then(m => ({ default: m.DashboardCharts })),
+  {
+    loading: () => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 h-64 animate-pulse" />
+        ))}
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 export const metadata = { title: 'Tableau de bord' };
 

@@ -10,7 +10,10 @@ export const metadata: Metadata = {
   title: { default: 'AMSODE RH PRO', template: '%s | AMSODE RH PRO' },
   description: 'Plateforme de Gestion des Ressources Humaines — AMSODE Mali',
   manifest: '/manifest.json',
-  icons: { icon: '/logo.png' },
+  icons: { 
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+  },
 };
 
 export const viewport: Viewport = {

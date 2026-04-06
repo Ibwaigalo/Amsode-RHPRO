@@ -10,15 +10,30 @@ interface Employee {
   lastName: string;
   workEmail: string | null;
   phone: string | null;
+  personalEmail?: string | null;
+  cin?: string | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  nationality?: string | null;
+  address?: string | null;
+  city?: string | null;
+  zone?: string | null;
   photoUrl: string | null;
   contractType: string;
   startDate: string;
   endDate: string | null;
   baseSalary: string;
   isActive: boolean;
+  leaveBalance?: number | null;
+  emergencyContact?: string | null;
+  emergencyPhone?: string | null;
   departmentName: string | null;
   positionTitle: string | null;
-  zone: string | null;
+  department?: { id: string; name: string; location: string | null };
+  departmentId?: string | null;
+  position?: { id: string; title: string };
+  positionId?: string | null;
+  managerId?: string | null;
 }
 
 const CONTRACT_COLORS: Record<string, string> = {
@@ -36,9 +51,11 @@ interface Props {
   pageSize: number;
   searchParams: { q?: string; department?: string; contract?: string };
   onViewProfile: (employee: Employee) => void;
+  onEdit: (employee: Employee) => void;
+  onDelete: (employee: Employee) => void;
 }
 
-export function EmployeesTable({ employees, departments, total, page, pageSize, searchParams, onViewProfile }: Props) {
+export function EmployeesTable({ employees, departments, total, page, pageSize, searchParams, onViewProfile, onEdit, onDelete }: Props) {
   const formatSalary = (s: string) =>
     new Intl.NumberFormat("fr-ML", { style: "currency", currency: "XOF", maximumFractionDigits: 0 }).format(parseFloat(s));
 
@@ -124,10 +141,18 @@ export function EmployeesTable({ employees, departments, total, page, pageSize, 
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                      <button 
+                        onClick={() => onEdit(emp)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                        title="Modifier"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                      <button 
+                        onClick={() => onDelete(emp)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        title="Supprimer"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

@@ -1,7 +1,12 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { jobPostings, departments } from "@/lib/schema";
-import RecruitmentClient from "@/components/recruitment/RecruitmentClient";
+import dynamic from "next/dynamic";
+
+const RecruitmentClient = dynamic(() => import("@/components/recruitment/RecruitmentClient"), {
+  loading: () => <div className="p-6"><div className="animate-pulse space-y-4"><div className="h-32 bg-gray-200 rounded"></div><div className="h-64 bg-gray-200 rounded"></div></div></div>,
+  ssr: false,
+});
 
 export const metadata = { title: "Recrutement | AMSODE RH" };
 

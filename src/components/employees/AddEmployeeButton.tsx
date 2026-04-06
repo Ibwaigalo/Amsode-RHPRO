@@ -37,6 +37,7 @@ export function AddEmployeeButton({ departments, managers }: Props) {
   const router = useRouter();
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<EmployeeForm>({
     resolver: zodResolver(employeeSchema),
+    mode: "onBlur",
     defaultValues: { contractType: "CDI" },
   });
 

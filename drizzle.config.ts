@@ -6,8 +6,8 @@ export default {
   schema: './drizzle/schema.ts',
   out: './drizzle/migrations',
   dialect: 'postgresql',
-  dbCredentials: { 
-    url: process.env.DATABASE_URL!,
+  dbCredentials: {
+    url: process.env.DATABASE_URL_DIRECT ?? process.env.DATABASE_URL!,
     ssl: true,
   },
 } satisfies Config;

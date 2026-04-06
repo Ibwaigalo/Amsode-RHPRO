@@ -50,6 +50,7 @@ export function TrainingClient({ trainings, employees }: Props) {
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<TrainingForm>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: { durationUnit: "hours" },
   });
 

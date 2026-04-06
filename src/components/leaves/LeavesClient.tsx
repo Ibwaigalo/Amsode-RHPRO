@@ -76,6 +76,7 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting }, reset } = useForm<LeaveForm>({
     resolver: zodResolver(leaveSchema),
+    mode: "onBlur",
     defaultValues: { leaveType: "CONGE_PAYE" },
   });
 
