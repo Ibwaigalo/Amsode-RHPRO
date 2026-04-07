@@ -104,7 +104,18 @@ export default function EmployeesClient({ employees, departments, positions, use
   });
 
   const tableData = filteredEmployees.map((emp) => ({
-    ...emp,
+    id: emp.id,
+    employeeNumber: emp.employeeNumber,
+    firstName: emp.firstName,
+    lastName: emp.lastName,
+    email: emp.workEmail ?? emp.personalEmail ?? "",
+    phone: emp.phone,
+    photoUrl: emp.photoUrl,
+    contractType: emp.contractType,
+    contractStart: emp.startDate,
+    contractEnd: emp.endDate,
+    baseSalary: emp.baseSalary,
+    isActive: emp.isActive,
     departmentName: emp.department?.name || null,
     positionTitle: emp.position?.title || null,
   }));
@@ -278,9 +289,6 @@ export default function EmployeesClient({ employees, departments, positions, use
         page={1}
         pageSize={10}
         searchParams={{}}
-        onViewProfile={(emp: any) => setSelectedEmployee(emp)}
-        onEdit={(emp: any) => handleEdit(emp)}
-        onDelete={(emp: any) => handleDelete(emp)}
       />
     </motion.div>
   );
