@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { Bell, Search, Sun, Moon, User } from 'lucide-react';
+import { Bell, Search, Sun, Moon, User, Menu } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
+import { useSidebar } from './DashboardClientLayout';
 
 const roleLabels: Record<string, string> = {
   ADMIN_RH: 'Administrateur RH',
@@ -13,23 +14,30 @@ const roleLabels: Record<string, string> = {
 export default function Header({ user }: { user: any }) {
   const { theme, setTheme } = useTheme();
   const [notifOpen, setNotifOpen] = useState(false);
+  const { setIsOpen } = useSidebar();
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between gap-4 z-10">
-      {/* Search */}
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Rechercher un membre, document..." />
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 md:px-6 py-3 flex items-center justify-between gap-2 md:gap-4 z-10">
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        
+        <div className="relative flex-1 max-w-xs md:max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Rechercher..." />
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        {/* Dark mode toggle */}
+      <div className="flex items-center gap-1 md:gap-2">
         <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
-        {/* Notifications */}
         <div className="relative">
           <button onClick={() => setNotifOpen(!notifOpen)}
             className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative">
@@ -37,11 +45,11 @@ export default function Header({ user }: { user: any }) {
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
           </button>
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 z-50">
+            <div className="absolute right-0 mt-2 w-72 md:w-80 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 z-50">
               <div className="p-4 border-b border-gray-100 dark:border-gray-800">
                 <h3 className="font-semibold text-sm">Notifications</h3>
               </div>
-              <div className="p-2 space-y-1">
+              <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
                 {[
                   { title: 'Demande de congé en attente', time: 'Il y a 5 min', type: 'warning' },
                   { title: 'Nouveau bulletin de paie disponible', time: 'Il y a 1h', type: 'info' },
@@ -56,14 +64,10 @@ export default function Header({ user }: { user: any }) {
                   </div>
                 ))}
               </div>
-              <div className="p-3 border-t border-gray-100 dark:border-gray-800 text-center">
-                <Link href="/notifications" className="text-xs text-amber-600 hover:underline">Voir toutes les notifications</Link>
-              </div>
             </div>
           )}
         </div>
 
-        {/* User menu */}
         <div className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700">
           <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
             {user?.image ? <img src={user.image} className="w-8 h-8 rounded-full" alt="" /> : <User className="w-4 h-4 text-amber-700" />}
