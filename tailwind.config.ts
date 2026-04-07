@@ -11,21 +11,21 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        outfit: ["var(--font-outfit)", "sans-serif"],
-        inter: ["var(--font-inter)", "sans-serif"],
+        outfit: ["Outfit", "sans-serif"],
+        inter: ["Inter", "sans-serif"],
       },
       colors: {
         brand: {
-          50:  "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#1a56cc",
-          700: "#0d4f87",
-          800: "#0a3d6b",
-          900: "#082d52",
+          50:  "#e6f7fd",
+          100: "#cceef9",
+          200: "#99ddf3",
+          300: "#66ccee",
+          400: "#33bbE8",
+          500: "#0090D1",
+          600: "#007ab8",
+          700: "#00669e",
+          800: "#005180",
+          900: "#003d66",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
