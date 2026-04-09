@@ -105,15 +105,9 @@ export const employees = pgTable('employees', {
   startDate: date('start_date').notNull(),
   endDate: date('end_date'),
   baseSalary: decimal('base_salary', { precision: 15, scale: 2 }).notNull(),
-  // AJOUT: Statut matrimonial et charges sociales maliennes
+  // AJOUT: Statut matrimonial et enfants à charge (optionnel)
   statutMatrimonial: text('statut_matrimonial').default('Célibataire'),
   nbEnfantsCharge: integer('nb_enfants_charge').default(0),
-  // AJOUT: Charges sociales calculées
-  salaireBrut: decimal('salaire_brut', { precision: 15, scale: 2 }),
-  chargesInps: decimal('charges_inps', { precision: 15, scale: 2 }).default('0'),
-  chargesAmo: decimal('charges_amo', { precision: 15, scale: 2 }).default('0'),
-  chargesIts: decimal('charges_its', { precision: 15, scale: 2 }).default('0'),
-  salaireNet: decimal('salaire_net', { precision: 15, scale: 2 }),
   positionId: uuid('position_id').references(() => positions.id),
   departmentId: uuid('department_id').references(() => departments.id),
   managerId: uuid('manager_id'),
