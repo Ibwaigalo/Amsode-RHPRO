@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, Search, Sun, Moon, User, Menu, Settings, LogOut, KeyRound } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -80,6 +80,35 @@ export default function Header({ user }: { user: any }) {
   const { setIsOpen } = useSidebar();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loadingNotif, setLoadingNotif] = useState(false);
+
+  useEffect(() => {
+    if (notifOpen && !notifications.length) {
+      setLoadingNotif(true);
+      fetch('/api/notifications')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setNotifications(data);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setLoadingNotif(false));
+    }
+  }, [notifOpen, notifications.length]);
+
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    if (minutes < 60) return `Il y a ${minutes} min`;
+    if (hours < 24) return `Il y a ${hours}h`;
+    return `Il y a ${days}j`;
+  };
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 md:px-6 py-3 flex items-center justify-between gap-2 md:gap-4 z-10">
@@ -115,17 +144,23 @@ export default function Header({ user }: { user: any }) {
                 <h3 className="font-semibold text-sm">Notifications</h3>
               </div>
               <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
-                {[
-                  { title: 'Demande de congé en attente', time: 'Il y a 5 min', type: 'warning' },
-                  { title: 'Nouveau bulletin de paie disponible', time: 'Il y a 1h', type: 'info' },
-                  { title: 'Évaluation à compléter', time: 'Il y a 3h', type: 'info' },
-                ].map((n, i) => (
-                  <div key={i} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.type === 'warning' ? 'bg-amber-400' : 'bg-blue-400'}`} />
-                    <div>
+                {loadingNotif ? (
+                  <div className="p-4 text-center text-sm text-gray-500">Chargement...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-gray-500">Aucune notification</div>
+                ) : notifications.map((n: any) => (
+                  <div key={n.id} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.isRead ? 'bg-gray-300' : n.type === 'ERROR' ? 'bg-red-400' : n.type === 'SUCCESS' ? 'bg-green-400' : 'bg-amber-400'}`} />
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-800 dark:text-gray-200">{n.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{n.time}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">{n.message}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{formatTime(n.createdAt)}</p>
                     </div>
+                    {n.link && (
+                      <Link href={n.link} onClick={() => setNotifOpen(false)} className="text-xs text-blue-500 hover:underline self-center">
+                        Voir
+                      </Link>
+                    )}
                   </div>
                 ))}
               </div>
