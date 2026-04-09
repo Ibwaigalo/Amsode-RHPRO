@@ -84,6 +84,7 @@ export default async function LeavesPage() {
       status: l.status || "PENDING",
       employeeName: emp?.firstName || null,
       employeeLastName: emp?.lastName || null,
+      employeeId: l.employeeId,
     };
   });
   

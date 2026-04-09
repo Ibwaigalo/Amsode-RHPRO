@@ -1,16 +1,13 @@
 "use client";
-// src/components/leaves/LeavesClient.tsx
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Plus, CheckCircle, XCircle, Clock, Calendar, X, Loader2 } from "lucide-react";
+import { Plus, CheckCircle, XCircle, Clock, Calendar, X, Loader2, Search, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { differenceInBusinessDays, parseISO, format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { motion, AnimatePresence } from "framer-motion";
 
 const LEAVE_TYPES: Record<string, string> = {
   CONGE_PAYE: "Congés annuels",
@@ -30,13 +27,13 @@ const TYPE_COLORS: Record<string, string> = {
   AUTRE: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
 };
 
-const STATUS_CONFIG = {
-  PENDING: { label: "En attente Manager", icon: Clock, color: "badge-pending" },
-  PENDING_PRESIDENT: { label: "En attente Président", icon: Clock, color: "badge-pending" },
-  PENDING_RH: { label: "En attente RH", icon: Clock, color: "badge-pending" },
-  APPROVED: { label: "Approuvé", icon: CheckCircle, color: "badge-approved" },
-  REJECTED: { label: "Refusé", icon: XCircle, color: "badge-rejected" },
-  CANCELLED: { label: "Annulé", icon: XCircle, color: "bg-gray-100 text-gray-700" },
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  PENDING: { label: "En attente Manager", color: "badge-pending" },
+  PENDING_PRESIDENT: { label: "En attente Président", color: "badge-pending" },
+  PENDING_RH: { label: "En attente RH", color: "badge-pending" },
+  APPROVED: { label: "Approuvé", color: "badge-approved" },
+  REJECTED: { label: "Refusé", color: "badge-rejected" },
+  CANCELLED: { label: "Annulé", color: "bg-gray-100 text-gray-700" },
 };
 
 const leaveSchema = z.object({
@@ -68,12 +65,12 @@ interface Props {
 }
 
 export default function LeavesClient({ requests, balances, userRole }: Props) {
-  console.log("DEBUG LeavesClient - requests:", requests, "userRole:", userRole);
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"list" | "calendar">("list");
   const [filterStatus, setFilterStatus] = useState("");
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [onLeaveFilter, setOnLeaveFilter] = useState<"all" | "on_leave" | "not_on_leave">("all");
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting }, reset } = useForm<LeaveForm>({
     resolver: zodResolver(leaveSchema),
@@ -113,56 +110,71 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
       toast.success(action === "approve" ? "Demande approuvée" : "Demande refusée");
       router.refresh();
-    } catch {
-      toast.error("Une erreur est survenue");
+    } catch (e: any) {
+      toast.error(e.message || "Une erreur est survenue");
     } finally {
       setLoadingAction(null);
     }
   };
 
+  const canApprove = (reqStatus: string, role: string) => {
+    if (role === "MANAGER") {
+      return reqStatus === "PENDING";
+    }
+    if (role === "ADMIN_RH" || role === "PRESIDENT") {
+      return reqStatus === "PENDING_RH";
+    }
+    return false;
+  };
+
   const filtered = filterStatus ? requests.filter(r => r.status === filterStatus) : requests;
-  const pending = requests.filter(r => r.status === "PENDING" || r.status === "PENDING_PRESIDENT" || r.status === "PENDING_RH").length;
+  
+  const pendingForManager = requests.filter(r => r.status === "PENDING").length;
+  const pendingForRH = requests.filter(r => r.status === "PENDING_RH").length;
+  const pending = userRole === "MANAGER" ? pendingForManager : pendingForRH;
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const employeesOnLeave = new Set(
+    requests
+      .filter(r => r.status === "APPROVED")
+      .filter(r => {
+        const start = parseISO(r.startDate);
+        const end = parseISO(r.endDate);
+        return start <= today && end >= today;
+      })
+      .map(r => r.employeeId)
+      .filter(Boolean)
+  );
+
+  const applyFilters = (req: LeaveRequest) => {
+    if (onLeaveFilter === "on_leave" && !employeesOnLeave.has(req.employeeId)) return false;
+    if (onLeaveFilter === "not_on_leave" && employeesOnLeave.has(req.employeeId)) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const fullName = `${req.employeeName} ${req.employeeLastName}`.toLowerCase();
+      if (!fullName.includes(query)) return false;
+    }
+    return true;
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 }
-  };
+  const finalFiltered = filtered.filter(applyFilters);
 
   return (
-    <motion.div 
-      className="space-y-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* Summary cards */}
-      <motion.div 
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "En attente", count: pending, color: "brand" },
           { label: "Approuvés", count: requests.filter(r => r.status === "APPROVED").length, color: "green" },
           { label: "Refusés", count: requests.filter(r => r.status === "REJECTED").length, color: "red" },
           { label: "Total", count: requests.length, color: "brand" },
         ].map((item, i) => (
-          <motion.div 
-            key={i} 
-            variants={itemVariants}
-            className="stat-card text-center"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.2 }}
-          >
+          <div key={i} className="stat-card text-center">
             <p className={cn("text-2xl font-bold font-outfit",
               item.color === "amber" ? "text-amber-500" :
               item.color === "green" ? "text-green-600" :
@@ -170,48 +182,77 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
               {item.count}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">{item.label}</p>
-          </motion.div>
+          </div>
         ))}
-      </motion.div>
-
-      {/* Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          {["", "PENDING", "PENDING_PRESIDENT", "PENDING_RH", "APPROVED", "REJECTED"].map((s) => (
-            <button key={s}
-              onClick={() => setFilterStatus(s)}
-              className={cn("text-xs px-3 py-1.5 rounded-full font-medium transition-colors",
-                filterStatus === s
-                  ? "bg-[#0090D1] text-white"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700")}>
-              {s === "" ? "Tous" : STATUS_CONFIG[s as keyof typeof STATUS_CONFIG]?.label}
-              {s === "PENDING" && pending > 0 && (
-                <span className="ml-1.5 bg-white/30 text-current px-1 rounded-full text-xs">{pending}</span>
-              )}
-            </button>
-          ))}
-        </div>
-        <button onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#0090D1] hover:bg-[#007ab8] text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
-          <Plus className="w-4 h-4" /> Nouvelle demande
-        </button>
       </div>
 
-      {/* Leave request form */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="bg-white dark:bg-gray-900 rounded-xl border border-blue-200 dark:border-blue-800 p-5"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Nouvelle demande de congé</h3>
-              <button onClick={() => setShowForm(false)}>
-                <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-              </button>
+      <div className="space-y-3">
+        {["ADMIN_RH", "PRESIDENT"].includes(userRole) && (
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Rechercher un employé..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <select
+                value={onLeaveFilter}
+                onChange={(e) => setOnLeaveFilter(e.target.value as any)}
+                className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">Tous les employés</option>
+                <option value="on_leave">En congés</option>
+                <option value="not_on_leave">Pas en congés</option>
+              </select>
+              {onLeaveFilter !== "all" && (
+                <button onClick={() => { setOnLeaveFilter("all"); setSearchQuery(""); }} className="p-1.5 text-gray-400 hover:text-gray-600">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            {["", "PENDING", "PENDING_RH", "APPROVED", "REJECTED"].map((s) => (
+              <button key={s}
+                onClick={() => setFilterStatus(s)}
+                className={cn("text-xs px-3 py-1.5 rounded-full font-medium transition-colors",
+                  filterStatus === s
+                    ? "bg-[#0090D1] text-white"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700")}>
+                {s === "" ? "Tous" : STATUS_CONFIG[s as keyof typeof STATUS_CONFIG]?.label}
+                {s === "PENDING" && userRole === "MANAGER" && pendingForManager > 0 && (
+                  <span className="ml-1.5 bg-white/30 text-current px-1 rounded-full text-xs">{pendingForManager}</span>
+                )}
+                {s === "PENDING_RH" && (userRole === "ADMIN_RH" || userRole === "PRESIDENT") && pendingForRH > 0 && (
+                  <span className="ml-1.5 bg-white/30 text-current px-1 rounded-full text-xs">{pendingForRH}</span>
+                )}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0090D1] hover:bg-[#007ab8] text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+            <Plus className="w-4 h-4" /> Nouvelle demande
+          </button>
+        </div>
+      </div>
+
+      {showForm && (
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-blue-200 dark:border-blue-800 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Nouvelle demande de congé</h3>
+            <button onClick={() => setShowForm(false)}>
+              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+            </button>
+          </div>
           <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type de congé</label>
@@ -259,17 +300,10 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
               </button>
             </div>
           </form>
-        </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
-      {/* Requests table */}
-      <motion.div 
-        className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-      >
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full data-table">
             <thead>
@@ -283,19 +317,27 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {finalFiltered.length === 0 ? (
                 <tr><td colSpan={6} className="text-center py-10 text-gray-400 text-sm">Aucune demande</td></tr>
-              ) : filtered.map((req) => {
+              ) : finalFiltered.map((req) => {
                 const statusCfg = STATUS_CONFIG[req.status as keyof typeof STATUS_CONFIG] || { label: req.status, color: "bg-gray-100 text-gray-700" };
+                const isOnLeave = employeesOnLeave.has(req.employeeId) && req.status === "APPROVED";
                 return (
                   <tr key={req.id}>
                     <td>
                       <div className="flex items-center gap-2">
+                        {isOnLeave && (
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          </span>
+                        )}
                         <div className="w-7 h-7 rounded-full bg-[#0090D1] flex items-center justify-center text-white text-xs font-bold">
                           {(req.employeeName?.[0] || "?")}
                         </div>
                         <span className="text-sm font-medium text-gray-900 dark:text-white">
                           {req.employeeName} {req.employeeLastName}
+                          {isOnLeave && <span className="ml-2 text-xs text-green-600 font-medium">En congé</span>}
                         </span>
                       </div>
                     </td>
@@ -315,14 +357,15 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
                         {statusCfg.label}
                       </span>
                     </td>
-                      {["ADMIN_RH", "MANAGER", "PRESIDENT"].includes(userRole) && (
+                    {["ADMIN_RH", "MANAGER", "PRESIDENT"].includes(userRole) && (
                       <td>
-                        {["PENDING", "PENDING_PRESIDENT", "PENDING_RH"].includes(req.status) && (
+                        {canApprove(req.status, userRole) ? (
                           <div className="flex items-center justify-end gap-1">
                             <button 
                               onClick={() => handleAction(req.id, "approve")}
                               disabled={loadingAction === req.id}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors disabled:opacity-50"
+                              title={userRole === "MANAGER" ? "Valider (puis RH validera)" : "Approuver"}
                             >
                               {loadingAction === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                             </button>
@@ -330,11 +373,14 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
                               onClick={() => handleAction(req.id, "reject")}
                               disabled={loadingAction === req.id}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                              title="Refuser"
                             >
                               {loadingAction === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                             </button>
                           </div>
-                        )}
+                        ) : req.status === "PENDING" && userRole === "ADMIN_RH" ? (
+                          <span className="text-xs text-gray-400" title="En attente validation manager">En attente manager</span>
+                        ) : null}
                       </td>
                     )}
                   </tr>
@@ -343,7 +389,7 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
             </tbody>
           </table>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

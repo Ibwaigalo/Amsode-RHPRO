@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { leaveRequests } from "@/lib/schema";
+import { leaveRequests, employees, users, notifications } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -30,14 +30,79 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const leave = await db.query.leaveRequests.findFirst({ where: eq(leaveRequests.id, params.id) });
     if (!leave) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
-    const newStatus = parsed.data.action === "reject" ? "REJECTED" : "PENDING_RH";
+    let newStatus: string;
+    let approverNote = parsed.data.rejectionReason || null;
+
+    if (role === "MANAGER") {
+      if (leave.status !== "PENDING") {
+        return NextResponse.json({ error: "Cette demande a déjà été traitée par le manager" }, { status: 400 });
+      }
+      
+      if (parsed.data.action === "reject") {
+        newStatus = "REJECTED";
+        const employeeUser = await db.query.users.findFirst({ 
+          where: eq(users.employeeId, leave.employeeId) 
+        });
+        if (employeeUser) {
+          await db.insert(notifications).values({
+            userId: employeeUser.id,
+            title: "Demande de congés refusée",
+            message: `Votre demande de congés a été refusée par le manager. Motif: ${approverNote || "Aucun"}`,
+            type: "ERROR",
+            link: "/leaves",
+          });
+        }
+      } else {
+        newStatus = "PENDING_RH";
+      }
+    } else {
+      if (leave.status !== "PENDING_RH") {
+        if (leave.status === "REJECTED") {
+          return NextResponse.json({ error: "Cette demande a déjà été refusée" }, { status: 400 });
+        }
+        if (leave.status === "APPROVED") {
+          return NextResponse.json({ error: "Cette demande a déjà été approuvée" }, { status: 400 });
+        }
+        return NextResponse.json({ error: "Le manager doit d'abord valider cette demande" }, { status: 400 });
+      }
+
+      if (parsed.data.action === "reject") {
+        newStatus = "REJECTED";
+        const employeeUser = await db.query.users.findFirst({ 
+          where: eq(users.employeeId, leave.employeeId) 
+        });
+        if (employeeUser) {
+          await db.insert(notifications).values({
+            userId: employeeUser.id,
+            title: "Demande de congés refusée",
+            message: `Votre demande de congés a été refusée par le RH. Motif: ${approverNote || "Aucun"}`,
+            type: "ERROR",
+            link: "/leaves",
+          });
+        }
+      } else {
+        newStatus = "APPROVED";
+        const employeeUser = await db.query.users.findFirst({ 
+          where: eq(users.employeeId, leave.employeeId) 
+        });
+        if (employeeUser) {
+          await db.insert(notifications).values({
+            userId: employeeUser.id,
+            title: "Demande de congés approuvée",
+            message: "Votre demande de congés a été approuvée par le RH.",
+            type: "SUCCESS",
+            link: "/leaves",
+          });
+        }
+      }
+    }
 
     const [updated] = await db
       .update(leaveRequests)
       .set({
-        status: newStatus,
+        status: newStatus as any,
         approvedAt: new Date(),
-        approverNote: parsed.data.rejectionReason || null,
+        approverNote: approverNote,
         updatedAt: new Date(),
       })
       .where(eq(leaveRequests.id, params.id))
