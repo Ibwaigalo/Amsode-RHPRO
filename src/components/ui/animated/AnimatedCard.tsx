@@ -1,37 +1,28 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { HTMLAttributes, forwardRef } from "react";
 
-interface AnimatedCardProps extends HTMLAttributes<HTMLDivElement> {
+interface AnimatedCardProps {
+  children: React.ReactNode;
+  className?: string;
   hover?: boolean;
   press?: boolean;
 }
 
-export const AnimatedCard = forwardRef<HTMLDivElement, AnimatedCardProps>(
-  ({ children, className = "", hover = true, press = true, ...props }, ref) => {
-    return (
-      <motion.div
-        ref={ref}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        whileHover={hover ? { y: -2, transition: { duration: 0.2 } } : undefined}
-        whileTap={press ? { scale: 0.99, transition: { duration: 0.1 } } : undefined}
-        className={`
-          bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5
-          shadow-sm hover:shadow-md transition-shadow
-          ${className}
-        `}
-        {...props}
-      >
-        {children}
-      </motion.div>
-    );
-  }
-);
-
-AnimatedCard.displayName = "AnimatedCard";
+export function AnimatedCard({ children, className = "", hover = true, press = true }: AnimatedCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={hover ? { y: -2, transition: { duration: 0.2 } } : undefined}
+      whileTap={press ? { scale: 0.99, transition: { duration: 0.1 } } : undefined}
+      className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-md transition-shadow ${className}`}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 interface StatCardProps {
   title: string;

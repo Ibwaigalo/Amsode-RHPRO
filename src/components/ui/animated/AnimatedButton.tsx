@@ -1,12 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ButtonHTMLAttributes, forwardRef } from "react";
 
-interface AnimatedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface AnimatedButtonProps {
+  children: React.ReactNode;
+  className?: string;
   variant?: "default" | "primary" | "secondary" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  type?: "button" | "submit" | "reset";
 }
 
 const variants = {
@@ -23,33 +27,29 @@ const sizes = {
   lg: "px-6 py-3 text-lg",
 };
 
-export const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
-  ({ children, className = "", variant = "default", size = "md", loading, disabled, ...props }, ref) => {
-    return (
-      <motion.button
-        ref={ref}
-        whileHover={{ scale: disabled ? 1 : 1.02 }}
-        whileTap={{ scale: disabled ? 1 : 0.98 }}
-        className={`
-          rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-          ${variants[variant]} ${sizes[size]} ${className}
-        `}
-        disabled={disabled || loading}
-        {...props}
-      >
-        {loading ? (
-          <span className="flex items-center gap-2">
-            <motion.span
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
-            />
-            Chargement...
-          </span>
-        ) : children}
-      </motion.button>
-    );
-  }
-);
-
-AnimatedButton.displayName = "AnimatedButton";
+export function AnimatedButton({ children, className = "", variant = "default", size = "md", loading, disabled, onClick, type = "button" }: AnimatedButtonProps) {
+  return (
+    <motion.button
+      type={type}
+      onClick={onClick}
+      whileHover={{ scale: disabled ? 1 : 1.02 }}
+      whileTap={{ scale: disabled ? 1 : 0.98 }}
+      className={`
+        rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+        ${variants[variant]} ${sizes[size]} ${className}
+      `}
+      disabled={disabled || loading}
+    >
+      {loading ? (
+        <span className="flex items-center gap-2">
+          <motion.span
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+          />
+          Chargement...
+        </span>
+      ) : children}
+    </motion.button>
+  );
+}

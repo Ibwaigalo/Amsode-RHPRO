@@ -99,15 +99,15 @@ async function getDashboardStats() {
     }));
 
     const employeeCountByMonth = await db.select({
-      month: sql<number>`EXTRACT(MONTH FROM ${employees.hireDate})`,
-      year: sql<number>`EXTRACT(YEAR FROM ${employees.hireDate})`,
+      month: sql<number>`EXTRACT(MONTH FROM ${employees.startDate})`,
+      year: sql<number>`EXTRACT(YEAR FROM ${employees.startDate})`,
       count: count(),
     })
       .from(employees)
-      .where(sql`${employees.hireDate} >= ${sixMonthsAgo.toISOString()}`)
+      .where(sql`${employees.startDate} >= ${sixMonthsAgo.toISOString()}`)
       .groupBy(
-        sql`EXTRACT(MONTH FROM ${employees.hireDate})`,
-        sql`EXTRACT(YEAR FROM ${employees.hireDate})`
+        sql`EXTRACT(MONTH FROM ${employees.startDate})`,
+        sql`EXTRACT(YEAR FROM ${employees.startDate})`
       );
 
     const currentCount = Number(empCount.count);
