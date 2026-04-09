@@ -48,6 +48,7 @@ interface Employee {
   departmentId?: string | null;
   positionId?: string | null;
   managerId?: string | null;
+  manager?: { id: string; firstName: string; lastName: string } | null;
 }
 
 interface Props {
