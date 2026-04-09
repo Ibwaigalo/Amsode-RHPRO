@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { CreateAccountsButton } from "./CreateAccountsButton";
+import { ResetPasswordsManager } from "./ResetPasswordButton";
 
 const AddEmployeeButton = dynamic(
   () => import("./AddEmployeeButton").then(m => m.AddEmployeeButton),
@@ -214,6 +215,7 @@ export default function EmployeesClient({ employees, departments, positions, use
             <ImportEmployeesButton />
             <AddEmployeeButton departments={departments} managers={managers} />
             <CreateAccountsButton />
+            <ResetPasswordsManager />
           </div>
         )}
       </motion.div>
