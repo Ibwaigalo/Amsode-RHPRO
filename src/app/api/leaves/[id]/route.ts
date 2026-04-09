@@ -105,28 +105,37 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
-  const [updated] = await db
-    .update(leaveRequests)
-    .set({
-      status: newStatus as any,
-      approverId: userId,
-      approvedAt: new Date(),
-      approverNote: parsed.data.rejectionReason,
-      updatedAt: new Date(),
-    })
-    .where(eq(leaveRequests.id, params.id))
-    .returning();
+  try {
+    const [updated] = await db
+      .update(leaveRequests)
+      .set({
+        status: newStatus as any,
+        approverId: userId,
+        approvedAt: new Date(),
+        approverNote: parsed.data.rejectionReason,
+        updatedAt: new Date(),
+      })
+      .where(eq(leaveRequests.id, params.id))
+      .returning();
 
-  const emp = await db.query.users.findFirst({ where: eq(users.employeeId, leave.employeeId) });
-  if (emp) {
-    await db.insert(notifications).values({
-      userId: emp.id,
-      title: notifyTitle,
-      message: notifyMessage,
-      type: "INFO",
-      link: "/leaves",
-    });
+    try {
+      const emp = await db.query.users.findFirst({ where: eq(users.employeeId, leave.employeeId) });
+      if (emp) {
+        await db.insert(notifications).values({
+          userId: emp.id,
+          title: notifyTitle,
+          message: notifyMessage,
+          type: "INFO",
+          link: "/leaves",
+        });
+      }
+    } catch (e) {
+      console.error("Error creating notification:", e);
+    }
+
+    return NextResponse.json(updated);
+  } catch (e: any) {
+    console.error("Error updating leave:", e);
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
-
-  return NextResponse.json(updated);
 }
