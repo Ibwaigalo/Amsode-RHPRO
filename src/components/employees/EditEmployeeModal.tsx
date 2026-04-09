@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Heart, Users } from "lucide-react";
 import { toast } from "sonner";
+import { ChargeCalculatorInline, MARITAL_STATUS_OPTIONS, MaritalStatus } from "@/components/payroll/ChargeCalculator";
 
 const employeeSchema = z.object({
   firstName: z.string().min(2, "Minimum 2 caractères"),
@@ -13,6 +14,10 @@ const employeeSchema = z.object({
   workEmail: z.string().email("Email invalide").optional().or(z.literal("")),
   phone: z.string().optional(),
   cin: z.string().optional(),
+  // AJOUT: Statut matrimonial
+  statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"]).optional(),
+  // AJOUT: Nombre d'enfants à charge
+  nbEnfantsCharge: z.number().min(0).max(10).optional(),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]),
   startDate: z.string().min(1, "Date de début requise"),
   endDate: z.string().optional(),
@@ -32,6 +37,9 @@ interface Employee {
   workEmail: string | null;
   phone: string | null;
   cin: string | null;
+  // AJOUT: nouveaux champs
+  statutMatrimonial?: string | null;
+  nbEnfantsCharge?: number | null;
   contractType: string;
   startDate: string;
   endDate: string | null;
@@ -54,7 +62,7 @@ interface Props {
 export function EditEmployeeModal({ employee, departments, positions, managers, onClose, onSuccess }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<EmployeeForm>({
+  const { register, handleSubmit, watch, formState: { errors }, reset } = useForm<EmployeeForm>({
     resolver: zodResolver(employeeSchema),
     mode: "onBlur",
     defaultValues: {
@@ -63,6 +71,8 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
       workEmail: employee.workEmail || "",
       phone: employee.phone || "",
       cin: employee.cin || "",
+      statutMatrimonial: (employee.statutMatrimonial as any) || "Célibataire",
+      nbEnfantsCharge: employee.nbEnfantsCharge || 0,
       contractType: employee.contractType as "CDI" | "CDD" | "STAGE" | "CONSULTANT",
       startDate: employee.startDate ? employee.startDate.split("T")[0] : "",
       endDate: employee.endDate ? employee.endDate.split("T")[0] : "",
@@ -72,6 +82,11 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
       isActive: employee.isActive,
     },
   });
+
+  const watchedBaseSalary = watch("baseSalary");
+  const watchedStatut = watch("statutMatrimonial");
+  const watchedEnfants = watch("nbEnfantsCharge");
+  const salaryValue = parseFloat(watchedBaseSalary) || 0;
 
   const onSubmit = async (data: EmployeeForm) => {
     setIsSubmitting(true);
@@ -125,7 +140,7 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white font-outfit">Modifier le membre</h2>
@@ -165,6 +180,36 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
               <input {...register("cin")}
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
             </div>
+            {/* AJOUT: Statut matrimonial */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <Heart className="w-3 h-3 inline mr-1" />
+                Statut Matrimonial
+              </label>
+              <select {...register("statutMatrimonial")}
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                {MARITAL_STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.icon} {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* AJOUT: Nombre d'enfants */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <Users className="w-3 h-3 inline mr-1" />
+                Enfants à charge
+              </label>
+              <input 
+                {...register("nbEnfantsCharge", { valueAsNumber: true })}
+                type="number" 
+                min="0" 
+                max="10"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+              />
+              <span className="text-xs text-gray-400">+5% abattement/enfant</span>
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type de contrat *</label>
               <select {...register("contractType")}
@@ -199,13 +244,13 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
               <input {...register("endDate")} type="date"
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
             </div>
-            <div>
+            <div className="col-span-2">
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Salaire de base (FCFA) *</label>
               <input {...register("baseSalary")} type="number" min="0"
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
               {errors.baseSalary && <p className="text-xs text-red-500 mt-1">{errors.baseSalary.message}</p>}
             </div>
-            <div className="flex items-center">
+            <div className="col-span-2 flex items-center">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" {...register("isActive")} defaultChecked={employee.isActive} 
                   className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
@@ -213,6 +258,20 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
               </label>
             </div>
           </div>
+
+          {/* AJOUT: Calculateur de charges en temps réel */}
+          {salaryValue > 0 && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
+              <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">
+                💰 Aperçu du salaire net (Charges Mali 2026)
+              </h4>
+              <ChargeCalculatorInline
+                salaryBrut={salaryValue}
+                statutMatrimonial={(watchedStatut as MaritalStatus) || "Célibataire"}
+                nbEnfantsCharge={watchedEnfants || 0}
+              />
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
             <button type="button" onClick={handleDelete}

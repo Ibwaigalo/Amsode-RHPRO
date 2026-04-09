@@ -6,7 +6,7 @@ import DashboardClient from '../../../components/dashboard/DashboardClient';
 import dynamic from 'next/dynamic';
 
 const DashboardCharts = dynamic(
-  () => import('../../../components/dashboard/DashboardCharts').then(m => ({ default: m.DashboardCharts })),
+  () => import('../../../components/dashboard/DashboardCharts'),
   {
     loading: () => (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

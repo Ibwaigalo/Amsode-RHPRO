@@ -83,6 +83,8 @@ export const positions = pgTable('positions', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+export const employeeStatusEnum = pgEnum('employee_status', ['CELIBATAIRE', 'MARIE', 'VEUF', 'DIVORCE', 'SEPARE']);
+
 export const employees = pgTable('employees', {
   id: uuid('id').primaryKey().defaultRandom(),
   employeeNumber: varchar('employee_number', { length: 20 }).notNull().unique(),
@@ -103,6 +105,9 @@ export const employees = pgTable('employees', {
   startDate: date('start_date').notNull(),
   endDate: date('end_date'),
   baseSalary: decimal('base_salary', { precision: 15, scale: 2 }).notNull(),
+  // AJOUT: Statut matrimonial et enfants à charge (optionnel)
+  statutMatrimonial: text('statut_matrimonial').default('Célibataire'),
+  nbEnfantsCharge: integer('nb_enfants_charge').default(0),
   positionId: uuid('position_id').references(() => positions.id),
   departmentId: uuid('department_id').references(() => departments.id),
   managerId: uuid('manager_id'),

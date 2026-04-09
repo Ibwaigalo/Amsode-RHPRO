@@ -1,12 +1,13 @@
 "use client";
 // src/components/employees/AddEmployeeButton.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X, Loader2 } from "lucide-react";
+import { Plus, X, Loader2, Heart, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ChargeCalculatorInline, MARITAL_STATUS_OPTIONS, MaritalStatus } from "@/components/payroll/ChargeCalculator";
 
 const employeeSchema = z.object({
   firstName: z.string().min(2, "Minimum 2 caractères"),
@@ -16,6 +17,12 @@ const employeeSchema = z.object({
   cin: z.string().optional(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(["M", "F"]).optional(),
+  // AJOUT: Statut matrimonial obligatoire
+  statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"], {
+    required_error: "Statut matrimonial requis",
+  }),
+  // AJOUT: Nombre d'enfants à charge
+  nbEnfantsCharge: z.number().min(0).max(10).default(0),
   address: z.string().optional(),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]),
   startDate: z.string().min(1, "Date de début requise"),
@@ -35,11 +42,20 @@ interface Props {
 export function AddEmployeeButton({ departments, managers }: Props) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<EmployeeForm>({
+  
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting }, reset, setValue } = useForm<EmployeeForm>({
     resolver: zodResolver(employeeSchema),
     mode: "onBlur",
-    defaultValues: { contractType: "CDI" },
+    defaultValues: { 
+      contractType: "CDI",
+      statutMatrimonial: "Célibataire",
+      nbEnfantsCharge: 0,
+    },
   });
+
+  const watchedBaseSalary = watch("baseSalary");
+  const watchedStatut = watch("statutMatrimonial");
+  const watchedEnfants = watch("nbEnfantsCharge");
 
   const onSubmit = async (data: EmployeeForm) => {
     try {
@@ -58,6 +74,9 @@ export function AddEmployeeButton({ departments, managers }: Props) {
     }
   };
 
+  // Parser le salaire pour affichage du calculateur
+  const salaryValue = parseFloat(watchedBaseSalary) || 0;
+
   if (!open) {
     return (
       <button
@@ -71,7 +90,7 @@ export function AddEmployeeButton({ departments, managers }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white font-outfit">Ajouter un membre</h2>
           <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -125,6 +144,38 @@ export function AddEmployeeButton({ departments, managers }: Props) {
                   <option value="F">Féminin</option>
                 </select>
               </div>
+              {/* AJOUT: Statut matrimonial */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <Heart className="w-3 h-3 inline mr-1" />
+                  Statut Matrimonial *
+                </label>
+                <select {...register("statutMatrimonial")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  {MARITAL_STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.icon} {opt.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.statutMatrimonial && <p className="text-xs text-red-500 mt-1">{errors.statutMatrimonial.message}</p>}
+              </div>
+              {/* AJOUT: Nombre d'enfants */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <Users className="w-3 h-3 inline mr-1" />
+                  Enfants à charge
+                </label>
+                <input 
+                  {...register("nbEnfantsCharge", { valueAsNumber: true })}
+                  type="number" 
+                  min="0" 
+                  max="10"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="0" 
+                />
+                <span className="text-xs text-gray-400">+5% abattement par enfant (max 25%)</span>
+              </div>
             </div>
           </div>
 
@@ -175,6 +226,20 @@ export function AddEmployeeButton({ departments, managers }: Props) {
               </div>
             </div>
           </div>
+
+          {/* AJOUT: Calculateur de charges en temps réel */}
+          {salaryValue > 0 && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
+              <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">
+                💰 Aperçu du salaire net (Charges Mali 2026)
+              </h4>
+              <ChargeCalculatorInline
+                salaryBrut={salaryValue}
+                statutMatrimonial={(watchedStatut as MaritalStatus) || "Célibataire"}
+                nbEnfantsCharge={watchedEnfants || 0}
+              />
+            </div>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setOpen(false)}

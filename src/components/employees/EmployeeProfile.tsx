@@ -1,8 +1,10 @@
 "use client";
 // src/components/employees/EmployeeProfile.tsx
-import { X, Mail, Phone, MapPin, Calendar, User, FileText, Award, AlertCircle } from "lucide-react";
+import { ReactNode } from 'react';
+import { X, Mail, Phone, MapPin, Calendar, User, FileText, Award, AlertCircle, Heart, Users } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ChargeCalculator, MARITAL_STATUS_OPTIONS } from "@/components/payroll/ChargeCalculator";
 
 interface Employee {
   id: string;
@@ -24,6 +26,13 @@ interface Employee {
   startDate: string;
   endDate: string | null;
   baseSalary: string;
+  // AJOUT: nouveaux champs
+  statutMatrimonial?: string | null;
+  nbEnfantsCharge?: number | null;
+  chargesInps?: string | null;
+  chargesAmo?: string | null;
+  chargesIts?: string | null;
+  salaireNet?: string | null;
   isActive: boolean;
   leaveBalance: number | null;
   emergencyContact: string | null;
@@ -196,12 +205,47 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
               <InfoItem label="Date de début" value={formatDate(employee.startDate)} />
               <InfoItem label="Date de fin" value={formatDate(employee.endDate)} />
               <InfoItem label="Solde congés" value={employee.leaveBalance !== null ? `${employee.leaveBalance} jours` : "—"} />
+              {/* AJOUT: Statut matrimonial et enfants à charge */}
+              <InfoItem 
+                label="Statut matrimonial" 
+                value={(
+                  <span className="flex items-center gap-1">
+                    {employee.statutMatrimonial === 'Marié' ? '💑 ' : employee.statutMatrimonial === 'Veuf/Veuve' ? '🕯️ ' : employee.statutMatrimonial === 'Divorcé/Séparé' ? '📋 ' : '👤 '}
+                    {employee.statutMatrimonial || 'Célibataire'}
+                  </span>
+                )} 
+              />
+              <InfoItem 
+                label="Enfants à charge" 
+                value={(
+                  <span className="flex items-center gap-1">
+                    👶 {employee.nbEnfantsCharge || 0}
+                  </span>
+                )} 
+              />
+              {/* Fin AJOUT */}
               <div className="col-span-2">
                 <p className="text-xs text-gray-500 mb-1">Salaire de base</p>
                 <p className="text-xl font-bold text-green-600">{formatSalary(employee.baseSalary)}</p>
               </div>
             </div>
           </div>
+
+          {/* AJOUT: Charges Breakdown */}
+          {parseFloat(employee.baseSalary) > 0 && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-600" />
+                Détail Charges Sociales Mali 2026
+              </h3>
+              <ChargeCalculator
+                salaryBrut={parseFloat(employee.baseSalary)}
+                statutMatrimonial={(employee.statutMatrimonial as any) || 'Célibataire'}
+                nbEnfantsCharge={employee.nbEnfantsCharge || 0}
+                showDetails={true}
+              />
+            </div>
+          )}
 
           {(employee.emergencyContact || employee.emergencyPhone) && (
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
@@ -221,7 +265,7 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
   );
 }
 
-function InfoItem({ label, value }: { label: string; value: string }) {
+function InfoItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <p className="text-xs text-gray-500 mb-1">{label}</p>

@@ -4,7 +4,6 @@ const nextConfig = {
     serverComponentsExternalPackages: ["postgres"],
   },
   compress: true,
-  swcMinify: true,
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
@@ -26,7 +25,10 @@ const nextConfig = {
       {
         source: "/_next/static/:path*",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
         ],
       },
     ];

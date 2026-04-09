@@ -93,6 +93,9 @@ export async function POST(req: NextRequest) {
           cin: emp.cin || null,
           dateOfBirth: emp.dateOfBirth || null,
           gender: emp.gender || null,
+          // AJOUT: Statut matrimonial et enfants à charge
+          statutMatrimonial: emp.statutMatrimonial || "Célibataire",
+          nbEnfantsCharge: emp.nbEnfantsCharge || 0,
           contractType: emp.contractType,
           startDate: emp.startDate,
           endDate: emp.endDate || null,

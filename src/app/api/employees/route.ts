@@ -14,6 +14,10 @@ const createSchema = z.object({
   cin: z.string().optional(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(["M", "F"]).optional(),
+  // AJOUT: Statut matrimonial
+  statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"]).optional(),
+  // AJOUT: Enfants à charge
+  nbEnfantsCharge: z.number().min(0).max(10).optional(),
   address: z.string().optional(),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]),
   startDate: z.string(),
@@ -126,6 +130,9 @@ export async function POST(req: NextRequest) {
     positionId: data.positionId,
     managerId: data.managerId || null,
     baseSalary: data.baseSalary,
+    // AJOUT: Statut matrimonial et enfants à charge
+    statutMatrimonial: data.statutMatrimonial || "Célibataire",
+    nbEnfantsCharge: data.nbEnfantsCharge || 0,
     isActive: true,
   }).returning();
 

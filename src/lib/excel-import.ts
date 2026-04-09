@@ -9,6 +9,9 @@ export interface EmployeeImportRow {
   cin?: string;
   dateOfBirth?: string;
   gender?: "M" | "F";
+  // AJOUT: Statut matrimonial et enfants à charge
+  statutMatrimonial?: string;
+  nbEnfantsCharge?: number;
   contractType: "CDI" | "CDD" | "STAGE" | "CONSULTANT";
   startDate: string;
   endDate?: string;
@@ -47,6 +50,34 @@ function parseDate(value: any): string | undefined {
   return strValue.substring(0, 10);
 }
 
+// AJOUT: Fonction pour normaliser le statut matrimonial
+function normalizeMaritalStatus(value: string | undefined): string {
+  if (!value) return "Célibataire";
+  
+  const normalized = String(value).trim().toLowerCase();
+  
+  // Mapping des valeurs FR/EN vers les valeurs standard
+  const statusMap: Record<string, string> = {
+    'celibataire': 'Célibataire',
+    'celib': 'Célibataire',
+    'single': 'Célibataire',
+    'marié': 'Marié',
+    'marie': 'Marié',
+    'married': 'Marié',
+    'veuf': 'Veuf/Veuve',
+    'veuve': 'Veuf/Veuve',
+    'widowed': 'Veuf/Veuve',
+    'divorcé': 'Divorcé/Séparé',
+    'divorce': 'Divorcé/Séparé',
+    'divorced': 'Divorcé/Séparé',
+    'separé': 'Divorcé/Séparé',
+    'separe': 'Divorcé/Séparé',
+    'separated': 'Divorcé/Séparé',
+  };
+  
+  return statusMap[normalized] || "Célibataire";
+}
+
 export function parseExcelFile(file: Buffer): ImportResult {
   const workbook = XLSX.read(file, { type: "buffer" });
   const sheetName = workbook.SheetNames[0];
@@ -61,8 +92,8 @@ export function parseExcelFile(file: Buffer): ImportResult {
 
   const headerMap: Record<string, string> = {
     "Prénom": "firstName",
-    "Nom": "lastName",
     "firstName": "firstName",
+    "Nom": "lastName",
     "lastName": "lastName",
     "Email": "workEmail",
     "email": "workEmail",
@@ -75,6 +106,19 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "dateOfBirth": "dateOfBirth",
     "Sexe": "gender",
     "gender": "gender",
+    // AJOUT: Statut matrimonial
+    "Statut matrimonial": "statutMatrimonial",
+    "statutMatrimonial": "statutMatrimonial",
+    "statut": "statutMatrimonial",
+    "Marital Status": "statutMatrimonial",
+    " maritalStatus": "statutMatrimonial",
+    // AJOUT: Nombre d'enfants
+    "Enfants à charge": "nbEnfantsCharge",
+    "nbEnfantsCharge": "nbEnfantsCharge",
+    "enfants": "nbEnfantsCharge",
+    "Nb enfants": "nbEnfantsCharge",
+    "Children": "nbEnfantsCharge",
+    // Fin AJOUT
     "Type de contrat": "contractType",
     "contractType": "contractType",
     "Date début": "startDate",
@@ -90,6 +134,7 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "Salaire": "baseSalary",
     "baseSalary": "baseSalary",
     "Salaire de base": "baseSalary",
+    "Salaire brut": "baseSalary",
     "Supérieur Hiérarchique": "managerId",
     "managerId": "managerId",
   };
@@ -135,6 +180,12 @@ export function parseExcelFile(file: Buffer): ImportResult {
         gender: normalizedRow.gender && ["M", "F"].includes(String(normalizedRow.gender).toUpperCase()) 
           ? String(normalizedRow.gender).toUpperCase() as "M" | "F" 
           : undefined,
+        // AJOUT: Statut matrimonial avec fallback
+        statutMatrimonial: normalizeMaritalStatus(normalizedRow.statutMatrimonial),
+        // AJOUT: Nombre d'enfants
+        nbEnfantsCharge: normalizedRow.nbEnfantsCharge !== undefined 
+          ? parseInt(String(normalizedRow.nbEnfantsCharge)) || 0 
+          : 0,
         contractType: normalizedRow.contractType as "CDI" | "CDD" | "STAGE" | "CONSULTANT",
         startDate: parseDate(normalizedRow.startDate) || "",
         endDate: parseDate(normalizedRow.endDate) || undefined,
@@ -161,6 +212,10 @@ export function generateEmployeeTemplate(): Buffer {
       "CIN": "ML-2024-001",
       "Date de naissance": "1990-01-15",
       "Sexe": "F",
+      // AJOUT: Nouvelles colonnes
+      "Statut matrimonial": "Marié",
+      "Enfants à charge": 2,
+      // Fin AJOUT
       "Type de contrat": "CDI",
       "Date début": "2024-01-15",
       "Date fin": "",
@@ -178,6 +233,10 @@ export function generateEmployeeTemplate(): Buffer {
       "CIN": "ML-2024-002",
       "Date de naissance": "1985-06-20",
       "Sexe": "M",
+      // AJOUT: Nouvelles colonnes
+      "Statut matrimonial": "Célibataire",
+      "Enfants à charge": 0,
+      // Fin AJOUT
       "Type de contrat": "CDI",
       "Date début": "2024-02-01",
       "Date fin": "",

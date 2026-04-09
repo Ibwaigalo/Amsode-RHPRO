@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 const DashboardCharts = dynamic(
-  () => import('./DashboardCharts').then(m => ({ default: m.DashboardCharts })),
+  () => import('./DashboardCharts'),
   {
     loading: () => (
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 h-64 animate-pulse" />

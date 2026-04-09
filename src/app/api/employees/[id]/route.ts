@@ -12,6 +12,10 @@ const updateSchema = z.object({
   workEmail: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   cin: z.string().optional(),
+  // AJOUT: Statut matrimonial
+  statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"]).optional(),
+  // AJOUT: Nombre d'enfants à charge
+  nbEnfantsCharge: z.number().min(0).max(10).optional(),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]).optional(),
   contractEnd: z.string().optional(),
   departmentId: z.string().uuid().optional().or(z.literal("")),
@@ -65,6 +69,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.workEmail !== undefined) updateData.workEmail = parsed.data.workEmail || null;
     if (parsed.data.phone !== undefined) updateData.phone = parsed.data.phone || null;
     if (parsed.data.cin !== undefined) updateData.cin = parsed.data.cin || null;
+    // AJOUT: Statut matrimonial et enfants à charge
+    if (parsed.data.statutMatrimonial !== undefined) updateData.statutMatrimonial = parsed.data.statutMatrimonial;
+    if (parsed.data.nbEnfantsCharge !== undefined) updateData.nbEnfantsCharge = parsed.data.nbEnfantsCharge;
     if (parsed.data.contractType !== undefined) updateData.contractType = parsed.data.contractType;
     if (parsed.data.contractEnd !== undefined) updateData.endDate = parsed.data.contractEnd || null;
     if (parsed.data.departmentId !== undefined) updateData.departmentId = parsed.data.departmentId || null;

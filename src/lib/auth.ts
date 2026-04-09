@@ -72,7 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/auth/error",
   },
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
 });
 
 export function hasRole(userRole: string, requiredRole: string): boolean {

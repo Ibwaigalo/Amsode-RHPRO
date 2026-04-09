@@ -52,7 +52,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function DashboardCharts({ chartsData }: { chartsData?: ChartsData }) {
+export default function DashboardCharts({ chartsData }: { chartsData?: ChartsData }) {
   const salaryByDept = chartsData?.salaryByDept?.length ? chartsData.salaryByDept : [
     { dept: "Direction", masse: 0 },
     { dept: "RH", masse: 0 },
