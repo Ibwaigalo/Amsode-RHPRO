@@ -34,15 +34,14 @@ export async function GET(req: NextRequest) {
     const managedIds = managedEmployees.map(e => e.id);
     
     if (managedIds.length > 0) {
-      const list = await db.select().from(leaveRequests).where(
-        or(
-          eq(leaveRequests.employeeId, user.employeeId),
-          ...managedIds.map(id => eq(leaveRequests.employeeId, id))
-        )
+      const ownLeaves = await db.select().from(leaveRequests).where(eq(leaveRequests.employeeId, user.employeeId));
+      const managedLeaves = await db.select().from(leaveRequests).where(
+        inArray(leaveRequests.employeeId, managedIds)
       );
-      return NextResponse.json(list);
+      return NextResponse.json([...ownLeaves, ...managedLeaves]);
     }
-    return NextResponse.json([]);
+    const ownLeaves = await db.select().from(leaveRequests).where(eq(leaveRequests.employeeId, user.employeeId));
+    return NextResponse.json(ownLeaves);
   }
   
   if (user.employeeId) {

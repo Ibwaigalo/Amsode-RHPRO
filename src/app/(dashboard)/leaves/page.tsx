@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { leaveRequests, employees, users } from "@/lib/schema";
-import { eq, or } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import dynamic from "next/dynamic";
 
 const LeavesClient = dynamic(() => import("@/components/leaves/LeavesClient"), {
@@ -18,17 +18,19 @@ async function getLeavesForUser(userId: string, role: string, employeeId: string
   }
   
   if (role === "MANAGER" && employeeId) {
+    // Get employees who have this employee as their manager
     const managedEmployees = await db.select({ id: employees.id }).from(employees).where(eq(employees.managerId, employeeId));
     const managedIds = managedEmployees.map(e => e.id);
     
     if (managedIds.length > 0) {
-      return await db.select().from(leaveRequests).where(
-        or(
-          eq(leaveRequests.employeeId, employeeId),
-          ...managedIds.map(id => eq(leaveRequests.employeeId, id))
-        )
+      // Also get own leaves
+      const ownLeaves = await db.select().from(leaveRequests).where(eq(leaveRequests.employeeId, employeeId));
+      const managedLeaves = await db.select().from(leaveRequests).where(
+        inArray(leaveRequests.employeeId, managedIds)
       );
+      return [...ownLeaves, ...managedLeaves];
     }
+    // Just own leaves if no managed employees
     return await db.select().from(leaveRequests).where(eq(leaveRequests.employeeId, employeeId));
   }
   
