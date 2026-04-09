@@ -1,9 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { Bell, Search, Sun, Moon, User, Menu } from 'lucide-react';
+import { Bell, Search, Sun, Moon, User, Menu, Settings, LogOut, KeyRound } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useSidebar } from './DashboardClientLayout';
+import { signOut } from 'next-auth/react';
+import { toast } from 'sonner';
 
 const roleLabels: Record<string, string> = {
   ADMIN_RH: 'Administrateur RH',
@@ -11,10 +13,73 @@ const roleLabels: Record<string, string> = {
   EMPLOYE: 'Membre',
 };
 
+function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error('Les mots de passe ne correspondent pas');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast.success('Mot de passe modifié !');
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6">
+        <h2 className="text-lg font-bold mb-4">Changer le mot de passe</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Mot de passe actuel</label>
+            <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Nouveau mot de passe</label>
+            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg" required minLength={6} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Confirmer</label>
+            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg" required />
+          </div>
+          <div className="flex gap-3">
+            <button type="button" onClick={onClose} className="flex-1 py-2 border rounded-lg">Annuler</button>
+            <button type="submit" disabled={loading} className="flex-1 py-2 bg-[#0090D1] text-white rounded-lg disabled:opacity-50">
+              {loading ? '...' : 'Enregistrer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Header({ user }: { user: any }) {
   const { theme, setTheme } = useTheme();
   const [notifOpen, setNotifOpen] = useState(false);
   const { setIsOpen } = useSidebar();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 md:px-6 py-3 flex items-center justify-between gap-2 md:gap-4 z-10">
@@ -68,16 +133,36 @@ export default function Header({ user }: { user: any }) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700">
-          <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
-            {user?.image ? <img src={user.image} className="w-8 h-8 rounded-full" alt="" /> : <User className="w-4 h-4 text-amber-700" />}
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">{user?.name || 'Utilisateur'}</p>
-            <p className="text-xs text-gray-500">{roleLabels[(user as any)?.role] || ''}</p>
-          </div>
+        <div className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700 relative">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
+              {user?.image ? <img src={user.image} className="w-8 h-8 rounded-full" alt="" /> : <User className="w-4 h-4 text-amber-700" />}
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">{user?.name || 'Utilisateur'}</p>
+              <p className="text-xs text-gray-500">{roleLabels[(user as any)?.role] || ''}</p>
+            </div>
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50">
+              <button onClick={() => { setMenuOpen(false); setShowPasswordModal(true); }}
+                className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <KeyRound className="w-4 h-4" /> Changer mot de passe
+              </button>
+              <Link href="/settings" onClick={() => setMenuOpen(false)}
+                className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <Settings className="w-4 h-4" /> Paramètres
+              </Link>
+              <button onClick={() => signOut({ callbackUrl: '/auth/login' })}
+                className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <LogOut className="w-4 h-4" /> Déconnexion
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
     </header>
   );
 }
