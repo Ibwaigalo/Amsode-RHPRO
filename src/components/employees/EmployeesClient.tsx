@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { CreateAccountsButton } from "./CreateAccountsButton";
 
 const AddEmployeeButton = dynamic(
   () => import("./AddEmployeeButton").then(m => m.AddEmployeeButton),
@@ -212,6 +213,7 @@ export default function EmployeesClient({ employees, departments, positions, use
           <div className="flex gap-2">
             <ImportEmployeesButton />
             <AddEmployeeButton departments={departments} managers={managers} />
+            <CreateAccountsButton />
           </div>
         )}
       </motion.div>
