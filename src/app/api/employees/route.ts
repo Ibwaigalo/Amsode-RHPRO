@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { employees, users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { hash } from "bcryptjs";
+import { randomBytes } from "crypto";
 
 const createSchema = z.object({
   firstName: z.string().min(2),
@@ -14,9 +16,7 @@ const createSchema = z.object({
   cin: z.string().optional(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(["M", "F"]).optional(),
-  // AJOUT: Statut matrimonial
   statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"]).optional(),
-  // AJOUT: Enfants à charge
   nbEnfantsCharge: z.number().min(0).max(10).optional(),
   address: z.string().optional(),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]),
@@ -26,12 +26,29 @@ const createSchema = z.object({
   positionId: z.string().uuid().optional(),
   managerId: z.string().uuid().optional(),
   baseSalary: z.string(),
+  createAccount: z.boolean().optional().default(true),
 });
 
 function generateEmployeeNumber(): string {
   const year = new Date().getFullYear().toString().slice(-2);
   const rand = Math.floor(Math.random() * 9000) + 1000;
   return `AMS-${year}-${rand}`;
+}
+
+async function createUserAccount(employeeId: string, firstName: string, lastName: string, email: string | null) {
+  const tempPassword = randomBytes(8).toString("hex");
+  const hashedPassword = await hash(tempPassword, 12);
+  
+  const [user] = await db.insert(users).values({
+    name: `${firstName} ${lastName}`,
+    email: email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@amsode.ml`,
+    password: hashedPassword,
+    role: "EMPLOYE",
+    employeeId: employeeId,
+    isActive: true,
+  }).returning();
+  
+  return { user, tempPassword };
 }
 
 export async function GET(req: NextRequest) {
@@ -130,11 +147,32 @@ export async function POST(req: NextRequest) {
     positionId: data.positionId,
     managerId: data.managerId || null,
     baseSalary: data.baseSalary,
-    // AJOUT: Statut matrimonial et enfants à charge
     statutMatrimonial: data.statutMatrimonial || "Célibataire",
     nbEnfantsCharge: data.nbEnfantsCharge || 0,
     isActive: true,
   }).returning();
 
-  return NextResponse.json(created, { status: 201 });
+  let userAccount = null;
+  let tempPassword = null;
+  
+  if (data.createAccount && data.workEmail) {
+    try {
+      const account = await createUserAccount(
+        created.id,
+        created.firstName,
+        created.lastName,
+        created.workEmail
+      );
+      userAccount = { email: account.user.email };
+      tempPassword = account.tempPassword;
+    } catch (e) {
+      console.error("Error creating user account:", e);
+    }
+  }
+
+  return NextResponse.json({ 
+    ...created, 
+    userAccount,
+    tempPassword: tempPassword ? "Mot de passe temporaire généré" : null
+  }, { status: 201 });
 }
