@@ -1,5 +1,6 @@
 "use client";
 // src/components/employees/EmployeeProfile.tsx
+import { ReactNode } from 'react';
 import { X, Mail, Phone, MapPin, Calendar, User, FileText, Award, AlertCircle, Heart, Users } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -207,20 +208,20 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
               {/* AJOUT: Statut matrimonial et enfants à charge */}
               <InfoItem 
                 label="Statut matrimonial" 
-                value={
+                value={(
                   <span className="flex items-center gap-1">
-                    {employee.statutMatrimonial === 'Marié' ? '💑' : employee.statutMatrimonial === 'Veuf/Veuve' ? '🕯️' : employee.statutMatrimonial === 'Divorcé/Séparé' ? '📋' : '👤'}
+                    {employee.statutMatrimonial === 'Marié' ? '💑 ' : employee.statutMatrimonial === 'Veuf/Veuve' ? '🕯️ ' : employee.statutMatrimonial === 'Divorcé/Séparé' ? '📋 ' : '👤 '}
                     {employee.statutMatrimonial || 'Célibataire'}
                   </span>
-                } 
+                )} 
               />
               <InfoItem 
                 label="Enfants à charge" 
-                value={
+                value={(
                   <span className="flex items-center gap-1">
                     👶 {employee.nbEnfantsCharge || 0}
                   </span>
-                } 
+                )} 
               />
               {/* Fin AJOUT */}
               <div className="col-span-2">
@@ -264,7 +265,7 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
   );
 }
 
-function InfoItem({ label, value }: { label: string; value: string }) {
+function InfoItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <p className="text-xs text-gray-500 mb-1">{label}</p>

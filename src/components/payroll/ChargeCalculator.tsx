@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import { HelpCircle, TrendingDown, Calculator } from 'lucide-react';
 import { calculateMalianCharges, formatXOF, MaritalStatus } from '@/lib/charges-calculator';
 
+export type { MaritalStatus };
+
 interface ChargeCalculatorProps {
   salaryBrut: number;
   statutMatrimonial: MaritalStatus;
