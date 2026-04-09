@@ -13,14 +13,21 @@ export const metadata = { title: "Congés | AMSODE RH" };
 export const revalidate = 15;
 
 async function getLeavesForUser(userId: string, role: string, employeeId: string | null) {
+  console.log("DEBUG getLeavesForUser:", { userId, role, employeeId });
+  
   if (role === "ADMIN_RH" || role === "PRESIDENT") {
     return await db.select().from(leaveRequests);
   }
   
   if (role === "MANAGER" && employeeId) {
+    console.log("DEBUG: MANAGER role, checking for managed employees where managerId =", employeeId);
+    
     // Get employees who have this employee as their manager
-    const managedEmployees = await db.select({ id: employees.id }).from(employees).where(eq(employees.managerId, employeeId));
+    const managedEmployees = await db.select({ id: employees.id, managerId: employees.managerId, firstName: employees.firstName, lastName: employees.lastName }).from(employees).where(eq(employees.managerId, employeeId));
+    console.log("DEBUG: Found managed employees:", managedEmployees.map(e => ({ id: e.id, name: e.firstName + " " + e.lastName })));
+    
     const managedIds = managedEmployees.map(e => e.id);
+    console.log("DEBUG: managedIds:", managedIds);
     
     if (managedIds.length > 0) {
       // Also get own leaves
@@ -28,6 +35,7 @@ async function getLeavesForUser(userId: string, role: string, employeeId: string
       const managedLeaves = await db.select().from(leaveRequests).where(
         inArray(leaveRequests.employeeId, managedIds)
       );
+      console.log("DEBUG: ownLeaves:", ownLeaves.length, "managedLeaves:", managedLeaves.length);
       return [...ownLeaves, ...managedLeaves];
     }
     // Just own leaves if no managed employees
