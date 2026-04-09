@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { EditEmployeeModal } from "./EditEmployeeModal";
 
 interface Employee {
   id: string;
@@ -25,6 +26,8 @@ interface Employee {
   departmentName: string | null;
   positionTitle: string | null;
   managerName: string | null;
+  managerId?: string | null;
+  manager?: { id: string; firstName: string; lastName: string } | null;
 }
 
 interface Props {
@@ -37,6 +40,7 @@ interface Props {
   onView?: (employee: Employee) => void;
   onEdit?: (employee: Employee) => void;
   onDelete?: (employee: Employee) => void;
+  managers?: { id: string; firstName: string; lastName: string }[];
 }
 
 const CONTRACT_COLORS: Record<string, string> = {
@@ -425,6 +429,7 @@ export function EmployeesTable({
   onView,
   onEdit,
   onDelete,
+  managers,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -468,11 +473,17 @@ export function EmployeesTable({
         <ViewModal employee={modal.employee} onClose={closeModal} />
       )}
       {modal?.type === "edit" && (
-        <EditModal
-          employee={modal.employee}
+        <EditEmployeeModal
+          employee={{
+            ...modal.employee,
+            managerId: modal.employee.managerId || null,
+            manager: (modal.employee as any).manager || null,
+          } as any}
           departments={departments}
+          positions={[]}
+          managers={managers || []}
           onClose={closeModal}
-          onSaved={handleSaved}
+          onSuccess={handleSaved}
         />
       )}
       {modal?.type === "delete" && (

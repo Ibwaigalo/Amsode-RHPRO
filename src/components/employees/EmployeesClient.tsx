@@ -304,6 +304,7 @@ export default function EmployeesClient({ employees, departments, positions, use
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        managers={managers}
       />
     </motion.div>
   );
