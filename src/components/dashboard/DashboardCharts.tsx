@@ -1,5 +1,4 @@
 "use client";
-// src/components/dashboard/DashboardCharts.tsx
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -9,34 +8,18 @@ interface ChartsData {
   salaryByDept: { dept: string; masse: number }[];
   deptEmployees: { dept: string; count: number }[];
   totalMass: number;
+  contractTypes: { name: string; value: number }[];
+  monthlyHeadcount: { month: string; effectif: number; recrutements: number; departs: number }[];
+  monthlyLeaves: { month: string; paie: number; maladie: number; autres: number }[];
 }
 
-const monthlyHeadcount = [
-  { month: "Jan", effectif: 42, recrutements: 2, departs: 1 },
-  { month: "Fév", effectif: 43, recrutements: 1, departs: 0 },
-  { month: "Mar", effectif: 45, recrutements: 3, departs: 1 },
-  { month: "Avr", effectif: 46, recrutements: 2, departs: 1 },
-  { month: "Mai", effectif: 47, recrutements: 2, departs: 1 },
-  { month: "Jun", effectif: 48, recrutements: 2, departs: 1 },
-  { month: "Jul", effectif: 50, recrutements: 3, departs: 1 },
-];
-
-const contractTypes = [
-  { name: "CDI", value: 62, color: "#1a56cc" },
-  { name: "CDD", value: 28, color: "#3b82f6" },
-  { name: "Stage", value: 7, color: "#93c5fd" },
-  { name: "Consultant", value: 3, color: "#bfdbfe" },
-];
-
-const leaveStats = [
-  { month: "Jan", payés: 12, maladie: 4, autres: 2 },
-  { month: "Fév", payés: 8, maladie: 6, autres: 1 },
-  { month: "Mar", payés: 15, maladie: 3, autres: 3 },
-  { month: "Avr", payés: 22, maladie: 5, autres: 2 },
-  { month: "Mai", payés: 18, maladie: 4, autres: 4 },
-  { month: "Jun", payé: 30, maladie: 7, autres: 2 },
-  { month: "Jul", payés: 25, maladie: 3, autres: 5 },
-];
+const COLORS: Record<string, string> = {
+  CDI: "#1a56cc",
+  CDD: "#3b82f6",
+  STAGE: "#93c5fd",
+  CONSULTANT: "#bfdbfe",
+  default: "#94a3b8",
+};
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -59,18 +42,27 @@ export default function DashboardCharts({ chartsData }: { chartsData?: ChartsDat
     { dept: "Finance", masse: 0 },
   ];
 
-  const deptEmployees = chartsData?.deptEmployees?.length ? chartsData.deptEmployees : [
-    { dept: "Direction", count: 0 },
-    { dept: "RH", count: 0 },
-    { dept: "Finance", count: 0 },
+  const contractTypes = chartsData?.contractTypes?.length ? chartsData.contractTypes : [
+    { name: "CDI", value: 0 },
+    { name: "CDD", value: 0 },
+    { name: "STAGE", value: 0 },
+    { name: "CONSULTANT", value: 0 },
   ];
+
+  const monthlyHeadcount = chartsData?.monthlyHeadcount?.length ? chartsData.monthlyHeadcount : [
+    { month: "Jan", effectif: 0, recrutements: 0, departs: 0 },
+  ];
+
+  const monthlyLeaves = chartsData?.monthlyLeaves?.length ? chartsData.monthlyLeaves : [
+    { month: "Jan", paie: 0, maladie: 0, autres: 0 },
+  ];
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Évolution effectif */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Évolution de l&apos;effectif</h3>
-          <span className="text-xs text-gray-400">7 derniers mois</span>
+          <span className="text-xs text-gray-400">6 derniers mois</span>
         </div>
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={monthlyHeadcount}>
@@ -89,7 +81,6 @@ export default function DashboardCharts({ chartsData }: { chartsData?: ChartsDat
         </ResponsiveContainer>
       </div>
 
-      {/* Masse salariale par département */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Masse salariale par département</h3>
@@ -108,7 +99,6 @@ export default function DashboardCharts({ chartsData }: { chartsData?: ChartsDat
         </ResponsiveContainer>
       </div>
 
-      {/* Types de contrats */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Répartition des contrats</h3>
@@ -118,7 +108,9 @@ export default function DashboardCharts({ chartsData }: { chartsData?: ChartsDat
             <PieChart>
               <Pie data={contractTypes} cx="50%" cy="50%" innerRadius={40} outerRadius={65}
                 dataKey="value" paddingAngle={2}>
-                {contractTypes.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                {contractTypes.map((entry, i) => (
+                  <Cell key={i} fill={COLORS[entry.name] || COLORS.default} />
+                ))}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
@@ -126,30 +118,29 @@ export default function DashboardCharts({ chartsData }: { chartsData?: ChartsDat
             {contractTypes.map((ct, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: ct.color }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[ct.name] || COLORS.default }} />
                   <span className="text-xs text-gray-600 dark:text-gray-400">{ct.name}</span>
                 </div>
-                <span className="text-xs font-semibold text-gray-900 dark:text-white">{ct.value}%</span>
+                <span className="text-xs font-semibold text-gray-900 dark:text-white">{ct.value}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Congés par mois */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Jours de congés pris</h3>
           <span className="text-xs text-gray-400">Jours / mois</span>
         </div>
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={leaveStats}>
+          <BarChart data={monthlyLeaves}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
             <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="payés" name="Payés" stackId="a" fill="#1a56cc" />
+            <Bar dataKey="paie" name="Payés" stackId="a" fill="#1a56cc" />
             <Bar dataKey="maladie" name="Maladie" stackId="a" fill="#93c5fd" />
             <Bar dataKey="autres" name="Autres" stackId="a" fill="#dbeafe" radius={[4, 4, 0, 0]} />
           </BarChart>
