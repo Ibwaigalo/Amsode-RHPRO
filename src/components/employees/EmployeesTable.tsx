@@ -24,6 +24,7 @@ interface Employee {
   isActive: boolean;
   departmentName: string | null;
   positionTitle: string | null;
+  managerName: string | null;
 }
 
 interface Props {
@@ -355,6 +356,11 @@ const EmployeeRow = memo(function EmployeeRow({
         <p className="text-xs text-gray-500">{emp.departmentName ?? "&#8212;"}</p>
       </td>
       <td>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {emp.managerName ?? "—"}
+        </span>
+      </td>
+      <td>
         <div className="space-y-1">
           <span className={cn(
             "text-xs px-2 py-0.5 rounded-full font-medium",
@@ -524,6 +530,7 @@ export function EmployeesTable({
                 <tr>
                   <th className="text-left">Employ&#233;</th>
                   <th className="text-left">Poste / D&#233;partement</th>
+                  <th className="text-left">Manager</th>
                   <th className="text-left">Contrat</th>
                   <th className="text-left">Salaire de base</th>
                   <th className="text-left">Statut</th>

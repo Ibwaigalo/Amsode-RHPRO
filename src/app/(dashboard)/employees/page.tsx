@@ -15,12 +15,15 @@ async function getData() {
     .filter(emp => emp.isActive)
     .map(emp => ({ id: emp.id, firstName: emp.firstName, lastName: emp.lastName }));
   
+  const managerMap = new Map(managers.map(m => [m.id, m]));
+  
   const empsWithRelations = allEmployees.map((emp) => ({
     ...emp,
     contractType: emp.contractType || "CDI",
     isActive: emp.isActive ?? true,
     department: allDepartments.find((d) => d.id === emp.departmentId),
     position: allPositions.find((p) => p.id === emp.positionId),
+    manager: emp.managerId ? managerMap.get(emp.managerId) : null,
   }));
   return { employees: empsWithRelations, departments: allDepartments, positions: allPositions, managers };
 }

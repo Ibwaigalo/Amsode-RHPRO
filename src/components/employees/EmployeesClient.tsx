@@ -71,6 +71,7 @@ interface Employee {
   position?: { id: string; title: string };
   positionId?: string | null;
   managerId?: string | null;
+  manager?: { id: string; firstName: string; lastName: string } | null;
 }
 
 interface Props {
@@ -120,6 +121,7 @@ export default function EmployeesClient({ employees, departments, positions, use
     isActive: emp.isActive,
     departmentName: emp.department?.name || null,
     positionTitle: emp.position?.title || null,
+    managerName: emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : null,
   }));
 
   const stats = [
