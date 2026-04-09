@@ -30,112 +30,79 @@ async function getRequesterInfo(leaveId: string) {
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const role = (session.user as any).role;
-  const userId = (session.user as any).id;
+    const role = (session.user as any).role;
+    const userId = (session.user as any).id;
 
-  if (!["ADMIN_RH", "MANAGER", "PRESIDENT"].includes(role)) {
-    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-  }
+    console.log("PATCH leave - userId:", userId, "role:", role, "leaveId:", params.id);
 
-  const body = await req.json();
-  const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    if (!["ADMIN_RH", "MANAGER", "PRESIDENT"].includes(role)) {
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+    }
 
-  const leave = await db.query.leaveRequests.findFirst({ where: eq(leaveRequests.id, params.id) });
-  if (!leave) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+    const body = await req.json();
+    const parsed = patchSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { employee, manager, managerRole } = await getRequesterInfo(params.id);
-  
-  let newStatus = "APPROVED";
-  let notifyTitle = "Demande approuvée";
-  let notifyMessage = "Votre demande de congé a été définitivement approuvée";
+    const leave = await db.query.leaveRequests.findFirst({ where: eq(leaveRequests.id, params.id) });
+    if (!leave) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
-  if (parsed.data.action === "reject") {
-    newStatus = "REJECTED";
-    notifyTitle = "Demande refusée";
-    notifyMessage = parsed.data.rejectionReason ? `Raison: ${parsed.data.rejectionReason}` : "Votre demande a été refusée";
-  } else {
-    if (role === "ADMIN_RH") {
-      if (managerRole === "PRESIDENT") {
-        newStatus = "APPROVED";
-        notifyTitle = "Demande approuvée par la RH";
-        notifyMessage = "Votre demande de congé a été définitivement approuvée";
-      } else if (managerRole === "MANAGER") {
-        newStatus = "APPROVED";
-        notifyTitle = "Demande approuvée par la RH";
-        notifyMessage = "Votre demande de congé a été définitivement approuvée";
-      } else if (!manager || managerRole === "EMPLOYE" || !managerRole) {
-        newStatus = "APPROVED";
-        notifyTitle = "Demande approuvée par la RH";
-        notifyMessage = "Votre demande de congé a été définitivement approuvée";
-      } else {
-        newStatus = "APPROVED";
-        notifyTitle = "Demande approuvée par la RH";
-        notifyMessage = "Votre demande de congé a été définitivement approuvée";
-      }
-    } 
-    else if (role === "PRESIDENT") {
-      if (managerRole === "MANAGER" || managerRole === "EMPLOYE" || !managerRole) {
-        newStatus = "PENDING_RH";
-        notifyTitle = "Demande approuvée par le Président";
-        notifyMessage = "En attente de validation RH";
-      } else {
-        newStatus = "APPROVED";
-        notifyTitle = "Demande approuvée par le Président";
-        notifyMessage = "Votre demande de congé a été définitivement approuvée";
-      }
-    } 
-    else if (role === "MANAGER") {
-      if (managerRole === "MANAGER") {
+    console.log("Leave found:", leave);
+
+    const { employee, manager, managerRole } = await getRequesterInfo(params.id);
+    console.log("Employee:", employee, "Manager:", manager, "ManagerRole:", managerRole);
+    
+    let newStatus = "APPROVED";
+    let notifyTitle = "Demande approuvée";
+    let notifyMessage = "Votre demande de congé a été définitivement approuvée";
+
+    if (parsed.data.action === "reject") {
+      newStatus = "REJECTED";
+      notifyTitle = "Demande refusée";
+      notifyMessage = parsed.data.rejectionReason ? `Raison: ${parsed.data.rejectionReason}` : "Votre demande a été refusée";
+    } else {
+      if (role === "MANAGER") {
         newStatus = "PENDING_RH";
         notifyTitle = "Demande approuvée par le Manager";
         notifyMessage = "En attente de validation RH";
-      } else if (managerRole === "EMPLOYE" || !managerRole || managerRole === null) {
-        newStatus = "PENDING_RH";
-        notifyTitle = "Demande approuvée par le Manager";
-        notifyMessage = "En attente de validation RH";
-      } else {
-        newStatus = "APPROVED";
-        notifyTitle = "Demande approuvée";
-        notifyMessage = "Votre demande de congé a été définitivement approuvée";
       }
     }
-  }
 
-  try {
+    console.log("Updating with status:", newStatus);
+
     const [updated] = await db
       .update(leaveRequests)
       .set({
         status: newStatus as any,
         approverId: userId,
         approvedAt: new Date(),
-        approverNote: parsed.data.rejectionReason,
+        approverNote: parsed.data.rejectionReason || null,
         updatedAt: new Date(),
       })
       .where(eq(leaveRequests.id, params.id))
       .returning();
 
-    try {
-      const emp = await db.query.users.findFirst({ where: eq(users.employeeId, leave.employeeId) });
-      if (emp) {
+    console.log("Updated leave:", updated);
+
+    if (employee) {
+      const empUser = await db.query.users.findFirst({ where: eq(users.employeeId, employee.id) });
+      if (empUser) {
         await db.insert(notifications).values({
-          userId: emp.id,
+          userId: empUser.id,
           title: notifyTitle,
           message: notifyMessage,
           type: "INFO",
           link: "/leaves",
         });
       }
-    } catch (e) {
-      console.error("Error creating notification:", e);
     }
 
     return NextResponse.json(updated);
   } catch (e: any) {
-    console.error("Error updating leave:", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error("Error in PATCH leave:", e);
+    return NextResponse.json({ error: e.message || "Erreur serveur" }, { status: 500 });
   }
 }
