@@ -34,6 +34,9 @@ interface Props {
   page: number;
   pageSize: number;
   searchParams: { q?: string; department?: string; contract?: string };
+  onView?: (employee: Employee) => void;
+  onEdit?: (employee: Employee) => void;
+  onDelete?: (employee: Employee) => void;
 }
 
 const CONTRACT_COLORS: Record<string, string> = {
@@ -389,19 +392,19 @@ const EmployeeRow = memo(function EmployeeRow({
       <td>
         <div className="flex items-center justify-end gap-1">
           <button
-            onClick={() => onView(emp)}
+            onClick={() => onView?.(emp)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
             title="Voir le profil">
             <Eye className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onEdit(emp)}
+            onClick={() => onEdit?.(emp)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
             title="Modifier">
             <Edit2 className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onDelete(emp)}
+            onClick={() => onDelete?.(emp)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             title="Archiver">
             <Trash2 className="w-4 h-4" />
@@ -419,6 +422,9 @@ export function EmployeesTable({
   page,
   pageSize,
   searchParams,
+  onView,
+  onEdit,
+  onDelete,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();

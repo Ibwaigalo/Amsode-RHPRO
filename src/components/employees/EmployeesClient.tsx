@@ -157,11 +157,17 @@ export default function EmployeesClient({ employees, departments, positions, use
     );
   }
 
-  const handleEdit = (employee: Employee) => {
-    setEditingEmployee(employee);
+  const handleView = (emp: any) => {
+    const fullEmp = employees.find(e => e.id === emp.id);
+    if (fullEmp) setSelectedEmployee(fullEmp);
   };
 
-  const handleDelete = async (employee: Employee) => {
+  const handleEdit = (employee: any) => {
+    const fullEmp = employees.find(e => e.id === employee.id);
+    if (fullEmp) setEditingEmployee(fullEmp);
+  };
+
+  const handleDelete = async (employee: any) => {
     if (!confirm(`Voulez-vous vraiment supprimer ${employee.firstName} ${employee.lastName} ?`)) {
       return;
     }
@@ -295,6 +301,9 @@ export default function EmployeesClient({ employees, departments, positions, use
         page={1}
         pageSize={10}
         searchParams={{}}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
     </motion.div>
   );
