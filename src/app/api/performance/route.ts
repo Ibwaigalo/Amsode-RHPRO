@@ -1,0 +1,48 @@
+// src/app/api/performance/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { evaluations } from "@/lib/schema";
+import { z } from "zod";
+
+const schema = z.object({
+  employeeId: z.string().uuid(),
+  period: z.string().min(3),
+  type: z.string().default("ANNUAL"),
+  scores: z.record(z.number()),
+  overallScore: z.string(),
+  strengths: z.string(),
+  improvements: z.string(),
+  goals: z.array(z.any()).optional().default([]),
+});
+
+export async function GET() {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const list = await db.select().from(evaluations);
+  return NextResponse.json(list);
+}
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+  const body = await req.json();
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+  const [evaluation] = await db.insert(evaluations).values({
+    employeeId: parsed.data.employeeId,
+    evaluatorId: null,
+    period: parsed.data.period,
+    type: parsed.data.type || "ANNUELLE",
+    objectives: parsed.data.scores || [],
+    competencies: [],
+    globalScore: parsed.data.overallScore || null,
+    comments: parsed.data.strengths || null,
+    employeeComments: parsed.data.improvements || null,
+    status: "EN_COURS",
+  } as any).returning();
+
+  return NextResponse.json(evaluation, { status: 201 });
+}
