@@ -122,6 +122,8 @@ export default function EmployeesClient({ employees, departments, positions, use
     departmentName: emp.department?.name || null,
     positionTitle: emp.position?.title || null,
     managerName: emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : null,
+    managerId: emp.managerId || null,
+    manager: emp.manager || null,
   }));
 
   const stats = [
