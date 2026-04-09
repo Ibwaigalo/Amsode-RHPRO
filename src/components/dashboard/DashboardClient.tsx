@@ -19,6 +19,9 @@ interface ChartsData {
   salaryByDept: { dept: string; masse: number }[];
   deptEmployees: { dept: string; count: number }[];
   totalMass: number;
+  contractTypes: { name: string; value: number }[];
+  monthlyHeadcount: { month: string; effectif: number; recrutements: number; departs: number }[];
+  monthlyLeaves: { month: string; paie: number; maladie: number; autres: number }[];
 }
 
 const containerVariants = {

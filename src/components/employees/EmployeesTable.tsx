@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { EditEmployeeModal } from "./EditEmployeeModal";
 
 interface Employee {
   id: string;
@@ -24,6 +25,9 @@ interface Employee {
   isActive: boolean;
   departmentName: string | null;
   positionTitle: string | null;
+  managerName: string | null;
+  managerId?: string | null;
+  manager?: { id: string; firstName: string; lastName: string } | null;
 }
 
 interface Props {
@@ -33,6 +37,10 @@ interface Props {
   page: number;
   pageSize: number;
   searchParams: { q?: string; department?: string; contract?: string };
+  onView?: (employee: Employee) => void;
+  onEdit?: (employee: Employee) => void;
+  onDelete?: (employee: Employee) => void;
+  managers?: { id: string; firstName: string; lastName: string }[];
 }
 
 const CONTRACT_COLORS: Record<string, string> = {
@@ -355,6 +363,11 @@ const EmployeeRow = memo(function EmployeeRow({
         <p className="text-xs text-gray-500">{emp.departmentName ?? "&#8212;"}</p>
       </td>
       <td>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {emp.managerName ?? "—"}
+        </span>
+      </td>
+      <td>
         <div className="space-y-1">
           <span className={cn(
             "text-xs px-2 py-0.5 rounded-full font-medium",
@@ -383,19 +396,19 @@ const EmployeeRow = memo(function EmployeeRow({
       <td>
         <div className="flex items-center justify-end gap-1">
           <button
-            onClick={() => onView(emp)}
+            onClick={() => onView?.(emp)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
             title="Voir le profil">
             <Eye className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onEdit(emp)}
+            onClick={() => onEdit?.(emp)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
             title="Modifier">
             <Edit2 className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onDelete(emp)}
+            onClick={() => onDelete?.(emp)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             title="Archiver">
             <Trash2 className="w-4 h-4" />
@@ -413,6 +426,10 @@ export function EmployeesTable({
   page,
   pageSize,
   searchParams,
+  onView,
+  onEdit,
+  onDelete,
+  managers,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -456,11 +473,17 @@ export function EmployeesTable({
         <ViewModal employee={modal.employee} onClose={closeModal} />
       )}
       {modal?.type === "edit" && (
-        <EditModal
-          employee={modal.employee}
+        <EditEmployeeModal
+          employee={{
+            ...modal.employee,
+            managerId: modal.employee.managerId || null,
+            manager: (modal.employee as any).manager || null,
+          } as any}
           departments={departments}
+          positions={[]}
+          managers={managers || []}
           onClose={closeModal}
-          onSaved={handleSaved}
+          onSuccess={handleSaved}
         />
       )}
       {modal?.type === "delete" && (
@@ -524,6 +547,7 @@ export function EmployeesTable({
                 <tr>
                   <th className="text-left">Employ&#233;</th>
                   <th className="text-left">Poste / D&#233;partement</th>
+                  <th className="text-left">Manager</th>
                   <th className="text-left">Contrat</th>
                   <th className="text-left">Salaire de base</th>
                   <th className="text-left">Statut</th>

@@ -68,6 +68,7 @@ interface Props {
 }
 
 export default function LeavesClient({ requests, balances, userRole }: Props) {
+  console.log("DEBUG LeavesClient - requests:", requests, "userRole:", userRole);
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"list" | "calendar">("list");

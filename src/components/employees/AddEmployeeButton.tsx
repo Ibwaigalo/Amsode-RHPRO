@@ -17,11 +17,9 @@ const employeeSchema = z.object({
   cin: z.string().optional(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(["M", "F"]).optional(),
-  // AJOUT: Statut matrimonial obligatoire
   statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"], {
     required_error: "Statut matrimonial requis",
   }),
-  // AJOUT: Nombre d'enfants à charge
   nbEnfantsCharge: z.number().min(0).max(10).default(0),
   address: z.string().optional(),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]),
@@ -30,6 +28,7 @@ const employeeSchema = z.object({
   departmentId: z.string().optional(),
   managerId: z.string().optional(),
   baseSalary: z.string().min(1, "Salaire requis"),
+  createAccount: z.boolean().default(true),
 });
 
 type EmployeeForm = z.infer<typeof employeeSchema>;
@@ -65,7 +64,15 @@ export function AddEmployeeButton({ departments, managers }: Props) {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(await res.text());
-      toast.success("Membre ajouté avec succès !");
+      
+      const result = await res.json();
+      
+      if (data.createAccount && result.userAccount) {
+        toast.success(`Membre ajouté ! Compte créé : ${result.userAccount.email}`);
+      } else {
+        toast.success("Membre ajouté avec succès !");
+      }
+      
       reset();
       setOpen(false);
       router.refresh();
@@ -240,6 +247,14 @@ export function AddEmployeeButton({ departments, managers }: Props) {
               />
             </div>
           )}
+
+          {/* Option création compte */}
+          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
+            <input {...register("createAccount")} type="checkbox" id="createAccount" className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
+            <label htmlFor="createAccount" className="text-sm text-green-800 dark:text-green-300">
+              Créer un compte de connexion pour l&apos;employé
+            </label>
+          </div>
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setOpen(false)}

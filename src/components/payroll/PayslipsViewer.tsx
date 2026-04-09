@@ -38,22 +38,26 @@ export default function PayslipsViewer({ periodId, periodLabel, onClose }: Props
   const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null);
 
   useEffect(() => {
-    fetchPayslips();
-  }, [periodId]);
-
-  const fetchPayslips = async () => {
-    try {
-      const res = await fetch(`/api/payroll/${periodId}/payslips`);
-      if (res.ok) {
-        const data = await res.json();
-        setPayslips(data);
+    let isMounted = true;
+    
+    async function fetchPayslips() {
+      try {
+        const res = await fetch(`/api/payroll/${periodId}/payslips`);
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          setPayslips(data);
+        }
+      } catch (e) {
+        console.error("Error fetching payslips:", e);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    } catch (e) {
-      console.error("Error fetching payslips:", e);
-    } finally {
-      setLoading(false);
     }
-  };
+    
+    fetchPayslips();
+    
+    return () => { isMounted = false; };
+  }, [periodId]);
 
   const downloadPdf = async (employeeId: string, employeeName: string) => {
     try {

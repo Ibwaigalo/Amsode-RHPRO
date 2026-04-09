@@ -7,6 +7,8 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { CreateAccountsButton } from "./CreateAccountsButton";
+import { ResetPasswordsManager } from "./ResetPasswordButton";
 
 const AddEmployeeButton = dynamic(
   () => import("./AddEmployeeButton").then(m => m.AddEmployeeButton),
@@ -69,6 +71,7 @@ interface Employee {
   position?: { id: string; title: string };
   positionId?: string | null;
   managerId?: string | null;
+  manager?: { id: string; firstName: string; lastName: string } | null;
 }
 
 interface Props {
@@ -118,6 +121,9 @@ export default function EmployeesClient({ employees, departments, positions, use
     isActive: emp.isActive,
     departmentName: emp.department?.name || null,
     positionTitle: emp.position?.title || null,
+    managerName: emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : null,
+    managerId: emp.managerId || null,
+    manager: emp.manager || null,
   }));
 
   const stats = [
@@ -153,11 +159,17 @@ export default function EmployeesClient({ employees, departments, positions, use
     );
   }
 
-  const handleEdit = (employee: Employee) => {
-    setEditingEmployee(employee);
+  const handleView = (emp: any) => {
+    const fullEmp = employees.find(e => e.id === emp.id);
+    if (fullEmp) setSelectedEmployee(fullEmp);
   };
 
-  const handleDelete = async (employee: Employee) => {
+  const handleEdit = (employee: any) => {
+    const fullEmp = employees.find(e => e.id === employee.id);
+    if (fullEmp) setEditingEmployee(fullEmp);
+  };
+
+  const handleDelete = async (employee: any) => {
     if (!confirm(`Voulez-vous vraiment supprimer ${employee.firstName} ${employee.lastName} ?`)) {
       return;
     }
@@ -212,6 +224,8 @@ export default function EmployeesClient({ employees, departments, positions, use
           <div className="flex gap-2">
             <ImportEmployeesButton />
             <AddEmployeeButton departments={departments} managers={managers} />
+            <CreateAccountsButton />
+            <ResetPasswordsManager />
           </div>
         )}
       </motion.div>
@@ -289,6 +303,10 @@ export default function EmployeesClient({ employees, departments, positions, use
         page={1}
         pageSize={10}
         searchParams={{}}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        managers={managers}
       />
     </motion.div>
   );

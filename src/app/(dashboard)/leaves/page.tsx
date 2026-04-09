@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { leaveRequests, employees, users } from "@/lib/schema";
-import { eq, or } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import dynamic from "next/dynamic";
 
 const LeavesClient = dynamic(() => import("@/components/leaves/LeavesClient"), {
@@ -13,21 +13,45 @@ export const metadata = { title: "Congés | AMSODE RH" };
 export const revalidate = 15;
 
 async function getLeavesForUser(userId: string, role: string, employeeId: string | null) {
+  console.log("LeavesPage - userId:", userId, "role:", role, "employeeId:", employeeId);
+  
+  // Get all employees with their managerId to debug
+  const allEmployees = await db.select({ 
+    id: employees.id, 
+    firstName: employees.firstName, 
+    lastName: employees.lastName,
+    managerId: employees.managerId
+  }).from(employees);
+  
+  console.log("All employees with managerId:", allEmployees.map(e => ({ 
+    id: e.id, 
+    name: e.firstName + " " + e.lastName, 
+    managerId: e.managerId 
+  })));
+  
   if (role === "ADMIN_RH" || role === "PRESIDENT") {
     return await db.select().from(leaveRequests);
   }
   
   if (role === "MANAGER" && employeeId) {
-    const managedEmployees = await db.select({ id: employees.id }).from(employees).where(eq(employees.managerId, employeeId));
+    const managedEmployees = await db.select({ 
+      id: employees.id, 
+      managerId: employees.managerId, 
+      firstName: employees.firstName, 
+      lastName: employees.lastName 
+    }).from(employees).where(eq(employees.managerId, employeeId));
+    
+    console.log("Managed employees (where managerId =", employeeId, "):", managedEmployees.map(e => e.firstName + " " + e.lastName));
+    
     const managedIds = managedEmployees.map(e => e.id);
     
     if (managedIds.length > 0) {
-      return await db.select().from(leaveRequests).where(
-        or(
-          eq(leaveRequests.employeeId, employeeId),
-          ...managedIds.map(id => eq(leaveRequests.employeeId, id))
-        )
+      const ownLeaves = await db.select().from(leaveRequests).where(eq(leaveRequests.employeeId, employeeId));
+      const managedLeaves = await db.select().from(leaveRequests).where(
+        inArray(leaveRequests.employeeId, managedIds)
       );
+      console.log("Found leaves - own:", ownLeaves.length, "managed:", managedLeaves.length);
+      return [...ownLeaves, ...managedLeaves];
     }
     return await db.select().from(leaveRequests).where(eq(leaveRequests.employeeId, employeeId));
   }

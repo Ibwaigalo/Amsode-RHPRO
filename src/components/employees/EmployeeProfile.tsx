@@ -26,7 +26,6 @@ interface Employee {
   startDate: string;
   endDate: string | null;
   baseSalary: string;
-  // AJOUT: nouveaux champs
   statutMatrimonial?: string | null;
   nbEnfantsCharge?: number | null;
   chargesInps?: string | null;
@@ -39,6 +38,7 @@ interface Employee {
   emergencyPhone: string | null;
   department?: { id: string; name: string; location: string | null };
   position?: { id: string; title: string };
+  manager?: { id: string; firstName: string; lastName: string } | null;
 }
 
 interface Props {
@@ -190,6 +190,7 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
             <div className="grid grid-cols-2 gap-4">
               <InfoItem label="Projet" value={employee.department?.name || "—"} />
               <InfoItem label="Poste" value={employee.position?.title || "—"} />
+              <InfoItem label="Supérieur hiérarchique" value={employee.manager ? `${employee.manager.firstName} ${employee.manager.lastName}` : "—"} />
               <InfoItem label="Zone d'affectation" value={employee.zone || "—"} />
               <InfoItem label="Ville" value={employee.city || "—"} />
             </div>
