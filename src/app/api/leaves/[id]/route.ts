@@ -36,7 +36,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       .update(leaveRequests)
       .set({
         status: newStatus,
-        approverId: userId,
         approvedAt: new Date(),
         approverNote: parsed.data.rejectionReason || null,
         updatedAt: new Date(),
@@ -47,6 +46,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json(updated);
   } catch (e: any) {
     console.error("PATCH leave error:", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Erreur serveur", 
+      message: e.message 
+    }, { status: 500 });
   }
 }
