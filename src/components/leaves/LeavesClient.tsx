@@ -58,19 +58,30 @@ interface LeaveRequest {
   employeeId: string | null;
 }
 
-interface Props {
-  requests: LeaveRequest[];
-  balances: any[];
-  userRole: string;
+interface LeaveBalance {
+  employeeId: string;
+  used: number;
+  remaining: number;
+  maxDays: number;
+  employeeName?: string;
 }
 
-export default function LeavesClient({ requests, balances, userRole }: Props) {
+interface Props {
+  requests: LeaveRequest[];
+  balances: LeaveBalance[];
+  userRole: string;
+  currentEmployeeId: string | null;
+}
+
+export default function LeavesClient({ requests, balances, userRole, currentEmployeeId }: Props) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState("");
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [onLeaveFilter, setOnLeaveFilter] = useState<"all" | "on_leave" | "not_on_leave">("all");
+
+  const myBalance = balances.find(b => b.employeeId === currentEmployeeId) || balances[0];
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting }, reset } = useForm<LeaveForm>({
     resolver: zodResolver(leaveSchema),
@@ -80,11 +91,18 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
 
   const startDate = watch("startDate");
   const endDate = watch("endDate");
+  const leaveType = watch("leaveType");
   const estimatedDays = startDate && endDate
     ? Math.max(0, differenceInBusinessDays(parseISO(endDate), parseISO(startDate)) + 1)
     : 0;
 
+  const isOverLimit = leaveType === "CONGE_PAYE" && myBalance && estimatedDays > myBalance.remaining;
+
   const onSubmit = async (data: LeaveForm) => {
+    if (data.leaveType === "CONGE_PAYE" && myBalance && estimatedDays > myBalance.remaining) {
+      toast.error(`Vous ne pouvez pas dépasser ${myBalance.remaining} jours restants`);
+      return;
+    }
     try {
       const res = await fetch("/api/leaves", {
         method: "POST",
@@ -165,8 +183,47 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
 
   const finalFiltered = filtered.filter(applyFilters);
 
+  const displayBalance = userRole === "ADMIN_RH" || userRole === "PRESIDENT" 
+    ? balances 
+    : [myBalance].filter(Boolean);
+
   return (
     <div className="space-y-4">
+      {(userRole === "ADMIN_RH" || userRole === "PRESIDENT") && balances.length > 0 && (
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Solde de congés (22 jours/an)</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
+            {balances.map(b => {
+              const empName = b.employeeName || (requests.find(r => r.employeeId === b.employeeId) 
+                ? `${requests.find(r => r.employeeId === b.employeeId)?.employeeName} ${requests.find(r => r.employeeId === b.employeeId)?.employeeLastName}`
+                : b.employeeId);
+              return (
+                <div key={b.employeeId} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
+                  <span className="font-medium text-gray-700 dark:text-gray-300 truncate">{empName}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600 font-semibold">{b.remaining}</span>
+                    <span className="text-gray-400">/ {b.maxDays}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {userRole !== "ADMIN_RH" && userRole !== "PRESIDENT" && myBalance && (
+        <div className="flex items-center gap-4 p-4 bg-[#0090D1]/10 dark:bg-[#0090D1]/20 rounded-xl border border-[#0090D1]/30">
+          <div className="flex-1">
+            <p className="text-sm text-[#0090D1] font-medium">Congés annuels</p>
+            <p className="text-xs text-gray-500">Période du contrat</p>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-[#0090D1]">{myBalance.remaining}</p>
+            <p className="text-xs text-gray-500">restant(s) sur {myBalance.maxDays}</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "En attente", count: pending, color: "brand" },
@@ -275,9 +332,23 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
             </div>
             {estimatedDays > 0 && (
               <div className="sm:col-span-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm">
+                <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm",
+                  isOverLimit 
+                    ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300" 
+                    : "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300")}>
                   <Calendar className="w-4 h-4" />
                   <span>{estimatedDays} jour(s) ouvrable(s)</span>
+                  {isOverLimit && <span className="ml-2 font-medium">- Dépasse le solde!</span>}
+                </div>
+              </div>
+            )}
+            {watch("leaveType") === "CONGE_PAYE" && myBalance && (
+              <div className="sm:col-span-2">
+                <div className="text-xs text-gray-500 mb-1">Solde actuel:</div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg text-sm">
+                  <span className="text-green-600 font-semibold">{myBalance.remaining} jours restants</span>
+                  <span className="text-gray-400">sur {myBalance.maxDays}</span>
+                  <span className="text-gray-400">({myBalance.used} utilisés)</span>
                 </div>
               </div>
             )}
@@ -293,8 +364,11 @@ export default function LeavesClient({ requests, balances, userRole }: Props) {
                 className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 Annuler
               </button>
-              <button type="submit" disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 bg-[#0090D1] hover:bg-[#007ab8] text-white text-sm font-medium rounded-lg transition-all disabled:opacity-60">
+              <button type="submit" disabled={isSubmitting || isOverLimit}
+                className={cn("flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg transition-all",
+                  isOverLimit 
+                    ? "bg-gray-400 cursor-not-allowed" 
+                    : "bg-[#0090D1] hover:bg-[#007ab8]")}>
                 {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Soumettre la demande
               </button>

@@ -67,6 +67,49 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Aucun profil employé lié à ce compte" }, { status: 400 });
   }
 
+  const employee = await db.query.employees.findFirst({ where: eq(employees.id, user.employeeId) });
+  if (!employee) return NextResponse.json({ error: "Employé non trouvé" }, { status: 400 });
+
+  if (parsed.data.leaveType === "CONGE_PAYE") {
+    const contractStart = new Date(employee.startDate);
+    const contractEnd = employee.endDate ? new Date(employee.endDate) : new Date(new Date(employee.startDate).getFullYear() + 1, 11, 31);
+    
+    const requestStart = new Date(parsed.data.startDate);
+    const requestEnd = new Date(parsed.data.endDate);
+    
+    const periodStart = contractStart > requestStart ? contractStart : requestStart;
+    const periodEnd = contractEnd && contractEnd < requestEnd ? contractEnd : requestEnd;
+    
+    const existingLeaves = await db.select().from(leaveRequests).where(
+      and(
+        eq(leaveRequests.employeeId, user.employeeId),
+        eq(leaveRequests.leaveType, "CONGE_PAYE"),
+        or(
+          eq(leaveRequests.status, "PENDING" as const),
+          eq(leaveRequests.status, "APPROVED" as const),
+          eq(leaveRequests.status, "PENDING_RH" as const),
+          eq(leaveRequests.status, "PENDING_PRESIDENT" as const)
+        )
+      )
+    );
+    
+    const usedDays = existingLeaves.reduce((sum, leave) => {
+      const leaveStart = new Date(leave.startDate);
+      const leaveEnd = new Date(leave.endDate);
+      if (leaveStart < periodEnd && leaveEnd > periodStart) {
+        return sum + leave.daysCount;
+      }
+      return sum;
+    }, 0);
+    
+    const newTotal = usedDays + parsed.data.totalDays;
+    if (newTotal > 22) {
+      return NextResponse.json({ 
+        error: `Vous avez déjà utilisé ${usedDays} jours de congés cette année. Maximum 22 jours autorisés.` 
+      }, { status: 400 });
+    }
+  }
+
   const [request] = await db.insert(leaveRequests).values({
     employeeId: user.employeeId,
     leaveType: parsed.data.leaveType as any,
