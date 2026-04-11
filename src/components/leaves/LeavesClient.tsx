@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Plus, CheckCircle, XCircle, Clock, Calendar, X, Loader2, Search, Filter } from "lucide-react";
+import { Plus, CheckCircle, XCircle, Clock, Calendar, X, Loader2, Search, Filter, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { cn } from "@/lib/utils";
 import { differenceInBusinessDays, parseISO, format } from "date-fns";
 
@@ -183,6 +184,35 @@ export default function LeavesClient({ requests, balances, userRole, currentEmpl
 
   const finalFiltered = filtered.filter(applyFilters);
 
+  const exportToExcel = () => {
+    const dataToExport = finalFiltered.map((req, index) => {
+      const isOnLeave = employeesOnLeave.has(req.employeeId) && req.status === "APPROVED";
+      return {
+        "#": index + 1,
+        "Employé": `${req.employeeName || ""} ${req.employeeLastName || ""}`.trim(),
+        "Type": LEAVE_TYPES[req.leaveType] || req.leaveType,
+        "Date début": format(parseISO(req.startDate), "dd/MM/yyyy"),
+        "Date fin": format(parseISO(req.endDate), "dd/MM/yyyy"),
+        "Jours": req.totalDays,
+        "Statut": STATUS_CONFIG[req.status as keyof typeof STATUS_CONFIG]?.label || req.status,
+        "En congé": isOnLeave ? "Oui" : "Non",
+        "Motif": req.reason || "",
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Congés");
+    
+    const colWidths = [
+      { wch: 5 }, { wch: 25 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 18 }, { wch: 10 }, { wch: 40 }
+    ];
+    ws["!cols"] = colWidths;
+    
+    XLSX.writeFile(wb, `conges_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    toast.success("Export Excel téléchargé !");
+  };
+
   const displayBalance = userRole === "ADMIN_RH" || userRole === "PRESIDENT" 
     ? balances 
     : [myBalance].filter(Boolean);
@@ -298,6 +328,10 @@ export default function LeavesClient({ requests, balances, userRole, currentEmpl
           <button onClick={() => setShowForm(!showForm)}
             className="flex items-center gap-2 px-4 py-2 bg-[#0090D1] hover:bg-[#007ab8] text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
             <Plus className="w-4 h-4" /> Nouvelle demande
+          </button>
+          <button onClick={exportToExcel}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+            <Download className="w-4 h-4" /> Export Excel
           </button>
         </div>
       </div>
