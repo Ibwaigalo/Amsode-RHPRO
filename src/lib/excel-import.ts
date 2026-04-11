@@ -5,13 +5,20 @@ export interface EmployeeImportRow {
   firstName: string;
   lastName: string;
   workEmail?: string;
+  personalEmail?: string;
   phone?: string;
   cin?: string;
   dateOfBirth?: string;
   gender?: "M" | "F";
+  nationality?: string;
+  address?: string;
+  city?: string;
+  zone?: string;
   // AJOUT: Statut matrimonial et enfants à charge
   statutMatrimonial?: string;
   nbEnfantsCharge?: number;
+  emergencyContact?: string;
+  emergencyPhone?: string;
   contractType: "CDI" | "CDD" | "STAGE" | "CONSULTANT";
   startDate: string;
   endDate?: string;
@@ -95,9 +102,12 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "firstName": "firstName",
     "Nom": "lastName",
     "lastName": "lastName",
+    "Email professionnel": "workEmail",
     "Email": "workEmail",
     "email": "workEmail",
     "workEmail": "workEmail",
+    "Email personnel": "personalEmail",
+    "personalEmail": "personalEmail",
     "Téléphone": "phone",
     "phone": "phone",
     "CIN": "cin",
@@ -106,6 +116,12 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "dateOfBirth": "dateOfBirth",
     "Sexe": "gender",
     "gender": "gender",
+    "Nationalité": "nationality",
+    "nationality": "nationality",
+    "Adresse": "address",
+    "address": "address",
+    "Ville": "city",
+    "city": "city",
     // AJOUT: Statut matrimonial
     "Statut matrimonial": "statutMatrimonial",
     "statutMatrimonial": "statutMatrimonial",
@@ -118,6 +134,11 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "enfants": "nbEnfantsCharge",
     "Nb enfants": "nbEnfantsCharge",
     "Children": "nbEnfantsCharge",
+    // AJOUT: Contact d'urgence
+    "Contact urgence": "emergencyContact",
+    "emergencyContact": "emergencyContact",
+    "Téléphone urgence": "emergencyPhone",
+    "emergencyPhone": "emergencyPhone",
     // Fin AJOUT
     "Type de contrat": "contractType",
     "contractType": "contractType",
@@ -174,18 +195,25 @@ export function parseExcelFile(file: Buffer): ImportResult {
         firstName: String(normalizedRow.firstName).trim(),
         lastName: String(normalizedRow.lastName).trim(),
         workEmail: normalizedRow.workEmail ? String(normalizedRow.workEmail).trim() : undefined,
+        personalEmail: normalizedRow.personalEmail ? String(normalizedRow.personalEmail).trim() : undefined,
         phone: normalizedRow.phone ? String(normalizedRow.phone).trim() : undefined,
         cin: normalizedRow.cin ? String(normalizedRow.cin).trim() : undefined,
         dateOfBirth: parseDate(normalizedRow.dateOfBirth),
         gender: normalizedRow.gender && ["M", "F"].includes(String(normalizedRow.gender).toUpperCase()) 
           ? String(normalizedRow.gender).toUpperCase() as "M" | "F" 
           : undefined,
+        nationality: normalizedRow.nationality ? String(normalizedRow.nationality).trim() : undefined,
+        address: normalizedRow.address ? String(normalizedRow.address).trim() : undefined,
+        city: normalizedRow.city ? String(normalizedRow.city).trim() : undefined,
+        zone: normalizedRow.zone ? String(normalizedRow.zone).trim() : undefined,
         // AJOUT: Statut matrimonial avec fallback
         statutMatrimonial: normalizeMaritalStatus(normalizedRow.statutMatrimonial),
         // AJOUT: Nombre d'enfants
         nbEnfantsCharge: normalizedRow.nbEnfantsCharge !== undefined 
           ? parseInt(String(normalizedRow.nbEnfantsCharge)) || 0 
           : 0,
+        emergencyContact: normalizedRow.emergencyContact ? String(normalizedRow.emergencyContact).trim() : undefined,
+        emergencyPhone: normalizedRow.emergencyPhone ? String(normalizedRow.emergencyPhone).trim() : undefined,
         contractType: normalizedRow.contractType as "CDI" | "CDD" | "STAGE" | "CONSULTANT",
         startDate: parseDate(normalizedRow.startDate) || "",
         endDate: parseDate(normalizedRow.endDate) || undefined,
@@ -207,15 +235,19 @@ export function generateEmployeeTemplate(): Buffer {
     {
       "Prénom": "Aminata",
       "Nom": "Coulibaly",
-      "Email": "a.coulibaly@amsode.ml",
+      "Email professionnel": "a.coulibaly@amsode.ml",
+      "Email personnel": "aminata@gmail.com",
       "Téléphone": "+223 70 00 00 00",
       "CIN": "ML-2024-001",
       "Date de naissance": "1990-01-15",
       "Sexe": "F",
-      // AJOUT: Nouvelles colonnes
+      "Nationalité": "Malienne",
+      "Adresse": "Hamdallaye, Rue 123",
+      "Ville": "Bamako",
       "Statut matrimonial": "Marié",
       "Enfants à charge": 2,
-      // Fin AJOUT
+      "Contact urgence": "Moussa Coulibaly",
+      "Téléphone urgence": "+223 70 00 00 01",
       "Type de contrat": "CDI",
       "Date début": "2024-01-15",
       "Date fin": "",
@@ -228,15 +260,19 @@ export function generateEmployeeTemplate(): Buffer {
     {
       "Prénom": "Mamadou",
       "Nom": "Diallo",
-      "Email": "m.diallo@amsode.ml",
+      "Email professionnel": "m.diallo@amsode.ml",
+      "Email personnel": "mamadou@gmail.com",
       "Téléphone": "+223 76 00 00 00",
       "CIN": "ML-2024-002",
       "Date de naissance": "1985-06-20",
       "Sexe": "M",
-      // AJOUT: Nouvelles colonnes
+      "Nationalité": "Malienne",
+      "Adresse": "ACI 2000, Rue 45",
+      "Ville": "Bamako",
       "Statut matrimonial": "Célibataire",
       "Enfants à charge": 0,
-      // Fin AJOUT
+      "Contact urgence": "",
+      "Téléphone urgence": "",
       "Type de contrat": "CDI",
       "Date début": "2024-02-01",
       "Date fin": "",

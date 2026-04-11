@@ -4,26 +4,34 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Loader2, Heart, Users } from "lucide-react";
+import { X, Loader2, Heart, Users, MapPin, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { ChargeCalculatorInline, MARITAL_STATUS_OPTIONS, MaritalStatus } from "@/components/payroll/ChargeCalculator";
 
 const employeeSchema = z.object({
-  firstName: z.string().min(2, "Minimum 2 caractères"),
-  lastName: z.string().min(2, "Minimum 2 caractères"),
-  workEmail: z.string().email("Email invalide").optional().or(z.literal("")),
+  firstName: z.string().min(2).optional(),
+  lastName: z.string().min(2).optional(),
+  workEmail: z.string().email().optional().or(z.literal("")),
+  personalEmail: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   cin: z.string().optional(),
-  // AJOUT: Statut matrimonial
+  dateOfBirth: z.string().optional(),
+  gender: z.enum(["M", "F"]).optional(),
+  nationality: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  zone: z.string().optional(),
   statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"]).optional(),
-  // AJOUT: Nombre d'enfants à charge
   nbEnfantsCharge: z.number().min(0).max(10).optional(),
-  contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]),
-  startDate: z.string().min(1, "Date de début requise"),
-  endDate: z.string().optional(),
-  departmentId: z.string().optional(),
-  managerId: z.string().optional(),
-  baseSalary: z.string().min(1, "Salaire requis"),
+  emergencyContact: z.string().optional(),
+  emergencyPhone: z.string().optional(),
+  positionId: z.string().uuid().optional().or(z.literal("")),
+  contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]).optional(),
+  startDate: z.string().optional(),
+  contractEnd: z.string().optional(),
+  departmentId: z.string().uuid().optional().or(z.literal("")),
+  managerId: z.string().uuid().optional().or(z.literal("")),
+  baseSalary: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -35,11 +43,19 @@ interface Employee {
   firstName: string;
   lastName: string;
   workEmail: string | null;
+  personalEmail: string | null;
   phone: string | null;
   cin: string | null;
-  // AJOUT: nouveaux champs
-  statutMatrimonial?: string | null;
-  nbEnfantsCharge?: number | null;
+  dateOfBirth: string | null;
+  gender: string | null;
+  nationality: string | null;
+  address: string | null;
+  city: string | null;
+  zone: string | null;
+  statutMatrimonial: string | null;
+  nbEnfantsCharge: number | null;
+  emergencyContact: string | null;
+  emergencyPhone: string | null;
   contractType: string;
   startDate: string;
   endDate: string | null;
@@ -70,13 +86,23 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
       firstName: employee.firstName,
       lastName: employee.lastName,
       workEmail: employee.workEmail || "",
+      personalEmail: employee.personalEmail || "",
       phone: employee.phone || "",
       cin: employee.cin || "",
+      dateOfBirth: employee.dateOfBirth ? employee.dateOfBirth.split("T")[0] : "",
+      gender: employee.gender as "M" | "F" | undefined,
+      nationality: employee.nationality || "",
+      address: employee.address || "",
+      city: employee.city || "",
+      zone: employee.zone || "",
       statutMatrimonial: (employee.statutMatrimonial as any) || "Célibataire",
       nbEnfantsCharge: employee.nbEnfantsCharge || 0,
+      emergencyContact: employee.emergencyContact || "",
+      emergencyPhone: employee.emergencyPhone || "",
+      positionId: employee.positionId || "",
       contractType: employee.contractType as "CDI" | "CDD" | "STAGE" | "CONSULTANT",
       startDate: employee.startDate ? employee.startDate.split("T")[0] : "",
-      endDate: employee.endDate ? employee.endDate.split("T")[0] : "",
+      contractEnd: employee.endDate ? employee.endDate.split("T")[0] : "",
       departmentId: employee.departmentId || "",
       managerId: employee.managerId || "",
       baseSalary: employee.baseSalary,
@@ -172,6 +198,11 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
             </div>
             <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email personnel</label>
+              <input {...register("personalEmail")} type="email"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+            </div>
+            <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Téléphone</label>
               <input {...register("phone")}
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
@@ -181,7 +212,25 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
               <input {...register("cin")}
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
             </div>
-            {/* AJOUT: Statut matrimonial */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date de naissance</label>
+              <input {...register("dateOfBirth")} type="date"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sexe</label>
+              <select {...register("gender")}
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                <option value="">Choisir</option>
+                <option value="M">Masculin</option>
+                <option value="F">Féminin</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nationalité</label>
+              <input {...register("nationality")}
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 <Heart className="w-3 h-3 inline mr-1" />
@@ -211,12 +260,70 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
               />
               <span className="text-xs text-gray-400">+5% abattement/enfant</span>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type de contrat *</label>
-              <select {...register("contractType")}
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
-                {["CDI", "CDD", "STAGE", "CONSULTANT"].map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+          </div>
+
+          {/* Section Adresse */}
+          <div>
+            <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">
+              <MapPin className="w-4 h-4 inline mr-1" /> Adresse & Localisation
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Adresse</label>
+                <input {...register("address")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ville</label>
+                <input {...register("city")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Zone</label>
+                <input {...register("zone")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section Contact d'urgence */}
+          <div>
+            <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">
+              <Phone className="w-4 h-4 inline mr-1" /> Contact d&apos;urgence
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du contact</label>
+                <input {...register("emergencyContact")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Téléphone d&apos;urgence</label>
+                <input {...register("emergencyPhone")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section Contrat */}
+          <div>
+            <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">Contrat & Affectation</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type de contrat *</label>
+                <select {...register("contractType")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  {["CDI", "CDD", "STAGE", "CONSULTANT"].map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Poste</label>
+                <select {...register("positionId")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  <option value="">Sélectionner</option>
+                  {positions.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                </select>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Projet</label>

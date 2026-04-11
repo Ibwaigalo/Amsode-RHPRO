@@ -66,6 +66,8 @@ interface Employee {
   leaveBalance: number | null;
   emergencyContact: string | null;
   emergencyPhone: string | null;
+  statutMatrimonial: string | null;
+  nbEnfantsCharge: number | null;
   department?: { id: string; name: string; location: string | null };
   departmentId?: string | null;
   position?: { id: string; title: string };
@@ -90,48 +92,6 @@ export default function EmployeesClient({ employees, departments, positions, use
   const [filterPosition, setFilterPosition] = useState("");
   const [filterZone, setFilterZone] = useState("");
   const router = useRouter();
-
-  const zones = [...new Set(employees.map(e => e.zone).filter(Boolean))] as string[];
-
-  const filteredEmployees = employees.filter((emp) => {
-    const matchesSearch = !search || 
-      `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
-      emp.employeeNumber.toLowerCase().includes(search.toLowerCase()) ||
-      (emp.workEmail?.toLowerCase().includes(search.toLowerCase()));
-    
-    const matchesProject = !filterProject || emp.department?.id === filterProject || emp.departmentId === filterProject;
-    const matchesPosition = !filterPosition || emp.position?.id === filterPosition || emp.positionId === filterPosition;
-    const matchesZone = !filterZone || emp.zone === filterZone;
-
-    return matchesSearch && matchesProject && matchesPosition && matchesZone;
-  });
-
-  const tableData = filteredEmployees.map((emp) => ({
-    id: emp.id,
-    employeeNumber: emp.employeeNumber,
-    firstName: emp.firstName,
-    lastName: emp.lastName,
-    email: emp.workEmail ?? emp.personalEmail ?? "",
-    phone: emp.phone,
-    photoUrl: emp.photoUrl,
-    contractType: emp.contractType,
-    contractStart: emp.startDate,
-    contractEnd: emp.endDate,
-    baseSalary: emp.baseSalary,
-    isActive: emp.isActive,
-    departmentName: emp.department?.name || null,
-    positionTitle: emp.position?.title || null,
-    managerName: emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : null,
-    managerId: emp.managerId || null,
-    manager: emp.manager || null,
-  }));
-
-  const stats = [
-    { label: "Total membres", value: employees.length, icon: Users, color: "text-[#0090D1]" },
-    { label: "Actifs", value: employees.filter((e) => e.isActive).length, icon: TrendingUp, color: "text-[#86C440]" },
-    { label: "En CDD", value: employees.filter((e) => e.contractType === "CDD").length, icon: Calendar, color: "text-[#0090D1]" },
-    { label: "Projets", value: departments.length, icon: Briefcase, color: "text-[#86C440]" },
-  ];
 
   if (selectedEmployee) {
     return (
@@ -158,6 +118,36 @@ export default function EmployeesClient({ employees, departments, positions, use
       />
     );
   }
+
+  const filteredEmployees = employees.filter((emp) => {
+    const matchesSearch = search === "" || 
+      `${emp.firstName} ${emp.lastName} ${emp.employeeNumber} ${emp.workEmail || ""} ${emp.personalEmail || ""}`
+        .toLowerCase()
+        .includes(search.toLowerCase());
+    
+    const matchesProject = filterProject === "" || emp.departmentId === filterProject;
+    const matchesPosition = filterPosition === "" || emp.positionId === filterPosition;
+    const matchesZone = filterZone === "" || emp.zone === filterZone;
+
+    return matchesSearch && matchesProject && matchesPosition && matchesZone;
+  });
+
+  const tableData = filteredEmployees.map((emp) => ({
+    ...emp,
+    email: emp.workEmail ?? emp.personalEmail ?? "",
+    departmentName: emp.department?.name || null,
+    positionTitle: emp.position?.title || null,
+    managerName: emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : null,
+  }));
+
+  const zones = [...new Set(employees.map((e) => e.zone).filter(Boolean))] as string[];
+
+  const stats = [
+    { label: "Total membres", value: employees.length, icon: Users, color: "text-[#0090D1]" },
+    { label: "Actifs", value: employees.filter((e) => e.isActive).length, icon: TrendingUp, color: "text-[#86C440]" },
+    { label: "En CDD", value: employees.filter((e) => e.contractType === "CDD").length, icon: Calendar, color: "text-[#0090D1]" },
+    { label: "Projets", value: departments.length, icon: Briefcase, color: "text-[#86C440]" },
+  ];
 
   const handleView = (emp: any) => {
     const fullEmp = employees.find(e => e.id === emp.id);
@@ -223,7 +213,7 @@ export default function EmployeesClient({ employees, departments, positions, use
         {(userRole === "ADMIN_RH" || userRole === "MANAGER") && (
           <div className="flex gap-2">
             <ImportEmployeesButton />
-            <AddEmployeeButton departments={departments} managers={managers} />
+            <AddEmployeeButton departments={departments} positions={positions} managers={managers} />
             <CreateAccountsButton />
             <ResetPasswordsManager />
           </div>

@@ -10,12 +10,20 @@ const updateSchema = z.object({
   firstName: z.string().min(2).optional(),
   lastName: z.string().min(2).optional(),
   workEmail: z.string().email().optional().or(z.literal("")),
+  personalEmail: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   cin: z.string().optional(),
-  // AJOUT: Statut matrimonial
+  dateOfBirth: z.string().optional(),
+  gender: z.enum(["M", "F"]).optional(),
+  nationality: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  zone: z.string().optional(),
   statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"]).optional(),
-  // AJOUT: Nombre d'enfants à charge
   nbEnfantsCharge: z.number().min(0).max(10).optional(),
+  emergencyContact: z.string().optional(),
+  emergencyPhone: z.string().optional(),
+  positionId: z.string().uuid().optional().or(z.literal("")),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]).optional(),
   contractEnd: z.string().optional(),
   departmentId: z.string().uuid().optional().or(z.literal("")),
@@ -67,11 +75,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.firstName !== undefined) updateData.firstName = parsed.data.firstName;
     if (parsed.data.lastName !== undefined) updateData.lastName = parsed.data.lastName;
     if (parsed.data.workEmail !== undefined) updateData.workEmail = parsed.data.workEmail || null;
+    if (parsed.data.personalEmail !== undefined) updateData.personalEmail = parsed.data.personalEmail || null;
     if (parsed.data.phone !== undefined) updateData.phone = parsed.data.phone || null;
     if (parsed.data.cin !== undefined) updateData.cin = parsed.data.cin || null;
-    // AJOUT: Statut matrimonial et enfants à charge
+    if (parsed.data.dateOfBirth !== undefined) updateData.dateOfBirth = parsed.data.dateOfBirth || null;
+    if (parsed.data.gender !== undefined) updateData.gender = parsed.data.gender || null;
+    if (parsed.data.nationality !== undefined) updateData.nationality = parsed.data.nationality || null;
+    if (parsed.data.address !== undefined) updateData.address = parsed.data.address || null;
+    if (parsed.data.city !== undefined) updateData.city = parsed.data.city || null;
+    if (parsed.data.zone !== undefined) updateData.zone = parsed.data.zone || null;
     if (parsed.data.statutMatrimonial !== undefined) updateData.statutMatrimonial = parsed.data.statutMatrimonial;
     if (parsed.data.nbEnfantsCharge !== undefined) updateData.nbEnfantsCharge = parsed.data.nbEnfantsCharge;
+    if (parsed.data.emergencyContact !== undefined) updateData.emergencyContact = parsed.data.emergencyContact || null;
+    if (parsed.data.emergencyPhone !== undefined) updateData.emergencyPhone = parsed.data.emergencyPhone || null;
+    if (parsed.data.positionId !== undefined) updateData.positionId = parsed.data.positionId || null;
     if (parsed.data.contractType !== undefined) updateData.contractType = parsed.data.contractType;
     if (parsed.data.contractEnd !== undefined) updateData.endDate = parsed.data.contractEnd || null;
     if (parsed.data.departmentId !== undefined) updateData.departmentId = parsed.data.departmentId || null;

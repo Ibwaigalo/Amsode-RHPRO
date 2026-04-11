@@ -1,6 +1,6 @@
 "use client";
 // src/components/employees/EmployeeProfile.tsx
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { X, Mail, Phone, MapPin, Calendar, User, FileText, Award, AlertCircle, Heart, Users } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -55,6 +55,20 @@ const CONTRACT_COLORS: Record<string, string> = {
 };
 
 export function EmployeeProfile({ employee, onClose, userRole }: Props) {
+  const profileRef = useRef<HTMLDivElement>(null);
+  const prevEmployeeId = useRef<string | null>(null);
+  
+  useEffect(() => {
+    if (prevEmployeeId.current !== employee.id) {
+      prevEmployeeId.current = employee.id;
+      setTimeout(() => {
+        if (profileRef.current) {
+          profileRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [employee.id]);
+  
   const formatSalary = (s: string) =>
     new Intl.NumberFormat("fr-ML", { style: "currency", currency: "XOF", maximumFractionDigits: 0 }).format(parseFloat(s));
 
@@ -86,7 +100,7 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
   const age = getAge(employee.dateOfBirth);
 
   return (
-    <div className="p-6 space-y-6">
+    <div ref={profileRef} className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Fiche Membre

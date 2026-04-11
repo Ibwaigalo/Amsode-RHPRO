@@ -9,8 +9,43 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { EditEmployeeModal } from "./EditEmployeeModal";
+import { EmployeeProfile } from "./EmployeeProfile";
 
 interface Employee {
+  id: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  workEmail: string | null;
+  personalEmail: string | null;
+  phone: string | null;
+  cin: string | null;
+  dateOfBirth: string | null;
+  gender: string | null;
+  nationality: string | null;
+  address: string | null;
+  city: string | null;
+  zone: string | null;
+  photoUrl: string | null;
+  contractType: string;
+  startDate: string;
+  endDate: string | null;
+  baseSalary: string;
+  isActive: boolean;
+  leaveBalance: number | null;
+  emergencyContact: string | null;
+  emergencyPhone: string | null;
+  statutMatrimonial: string | null;
+  nbEnfantsCharge: number | null;
+  department?: { id: string; name: string; location: string | null };
+  departmentId?: string | null;
+  position?: { id: string; title: string };
+  positionId?: string | null;
+  managerId?: string | null;
+  manager?: { id: string; firstName: string; lastName: string } | null;
+}
+
+interface EmployeeTableRow {
   id: string;
   employeeNumber: string;
   firstName: string;
@@ -43,6 +78,14 @@ interface Props {
   managers?: { id: string; firstName: string; lastName: string }[];
 }
 
+interface TableRowProps {
+  emp: EmployeeTableRow;
+  fullEmployee?: Employee;
+  onView: (e: Employee) => void;
+  onEdit: (e: Employee) => void;
+  onDelete: (e: Employee) => void;
+}
+
 const CONTRACT_COLORS: Record<string, string> = {
   CDI:        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
   CDD:        "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
@@ -68,6 +111,7 @@ function ViewModal({
   employee: Employee;
   onClose: () => void;
 }) {
+  console.log("📋 ViewModal - données reçues:", JSON.stringify(employee, null, 2));
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={onClose}>
@@ -335,12 +379,7 @@ const EmployeeRow = memo(function EmployeeRow({
   onView,
   onEdit,
   onDelete,
-}: {
-  emp: Employee;
-  onView: (e: Employee) => void;
-  onEdit: (e: Employee) => void;
-  onDelete: (e: Employee) => void;
-}) {
+}: TableRowProps) {
   return (
     <tr>
       <td>
@@ -439,14 +478,15 @@ export function EmployeesTable({
 
   const [modal, setModal] = useState<{
     type: "view" | "edit" | "delete";
-    employee: Employee;
+    employee: EmployeeTableRow;
+    fullEmployee?: Employee;
   } | null>(null);
 
   const closeModal = useCallback(() => setModal(null), []);
 
-  const handleView   = useCallback((emp: Employee) => setModal({ type: "view",   employee: emp }), []);
-  const handleEdit   = useCallback((emp: Employee) => setModal({ type: "edit",   employee: emp }), []);
-  const handleDelete = useCallback((emp: Employee) => setModal({ type: "delete", employee: emp }), []);
+  const handleView   = useCallback((emp: Employee) => setModal({ type: "view",   employee: emp as EmployeeTableRow, fullEmployee: emp }), []);
+  const handleEdit   = useCallback((emp: Employee) => setModal({ type: "edit",   employee: emp as EmployeeTableRow, fullEmployee: emp }), []);
+  const handleDelete = useCallback((emp: Employee) => setModal({ type: "delete", employee: emp as EmployeeTableRow, fullEmployee: emp }), []);
 
   const updateQuery = useCallback((params: Record<string, string>) => {
     const sp = new URLSearchParams();
@@ -469,16 +509,16 @@ export function EmployeesTable({
 
   return (
     <>
-      {modal?.type === "view" && (
-        <ViewModal employee={modal.employee} onClose={closeModal} />
+      {modal?.type === "view" && modal.fullEmployee && (
+        <EmployeeProfile 
+          employee={modal.fullEmployee} 
+          onClose={closeModal} 
+          userRole="ADMIN_RH" 
+        />
       )}
-      {modal?.type === "edit" && (
+      {modal?.type === "edit" && modal.fullEmployee && (
         <EditEmployeeModal
-          employee={{
-            ...modal.employee,
-            managerId: modal.employee.managerId || null,
-            manager: (modal.employee as any).manager || null,
-          } as any}
+          employee={modal.fullEmployee}
           departments={departments}
           positions={[]}
           managers={managers || []}
@@ -568,6 +608,7 @@ export function EmployeesTable({
                     onView={handleView}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    fullEmployee={emp as Employee}
                   />
                 ))}
               </tbody>

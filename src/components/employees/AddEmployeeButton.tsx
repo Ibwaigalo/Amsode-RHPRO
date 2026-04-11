@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, X, Loader2, Heart, Users } from "lucide-react";
+import { Plus, X, Loader2, Heart, Users, User, MapPin, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChargeCalculatorInline, MARITAL_STATUS_OPTIONS, MaritalStatus } from "@/components/payroll/ChargeCalculator";
@@ -13,19 +13,26 @@ const employeeSchema = z.object({
   firstName: z.string().min(2, "Minimum 2 caractères"),
   lastName: z.string().min(2, "Minimum 2 caractères"),
   workEmail: z.string().email("Email invalide").optional().or(z.literal("")),
+  personalEmail: z.string().email("Email invalide").optional().or(z.literal("")),
   phone: z.string().optional(),
   cin: z.string().optional(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(["M", "F"]).optional(),
+  nationality: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  zone: z.string().optional(),
   statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"], {
     required_error: "Statut matrimonial requis",
   }),
   nbEnfantsCharge: z.number().min(0).max(10).default(0),
-  address: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  emergencyPhone: z.string().optional(),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]),
   startDate: z.string().min(1, "Date de début requise"),
   endDate: z.string().optional(),
   departmentId: z.string().optional(),
+  positionId: z.string().optional(),
   managerId: z.string().optional(),
   baseSalary: z.string().min(1, "Salaire requis"),
   createAccount: z.boolean().default(true),
@@ -35,10 +42,11 @@ type EmployeeForm = z.infer<typeof employeeSchema>;
 
 interface Props {
   departments: { id: string; name: string }[];
+  positions: { id: string; title: string; departmentId: string | null }[];
   managers: { id: string; firstName: string; lastName: string }[];
 }
 
-export function AddEmployeeButton({ departments, managers }: Props) {
+export function AddEmployeeButton({ departments, positions, managers }: Props) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   
@@ -49,6 +57,9 @@ export function AddEmployeeButton({ departments, managers }: Props) {
       contractType: "CDI",
       statutMatrimonial: "Célibataire",
       nbEnfantsCharge: 0,
+      city: "Bamako",
+      zone: "Bamako",
+      nationality: "Malienne",
     },
   });
 
@@ -63,9 +74,10 @@ export function AddEmployeeButton({ departments, managers }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error(await res.text());
       
       const result = await res.json();
+      
+      if (!res.ok) throw new Error(result.error || await res.text());
       
       if (data.createAccount && result.userAccount) {
         toast.success(`Membre ajouté ! Compte créé : ${result.userAccount.email}`);
@@ -131,6 +143,12 @@ export function AddEmployeeButton({ departments, managers }: Props) {
                   placeholder="a.coulibaly@amsode.ml" />
               </div>
               <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email personnel</label>
+                <input {...register("personalEmail")} type="email"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="aminata@gmail.com" />
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Téléphone</label>
                 <input {...register("phone")}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
@@ -143,6 +161,11 @@ export function AddEmployeeButton({ departments, managers }: Props) {
                   placeholder="ML–..." />
               </div>
               <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date de naissance</label>
+                <input {...register("dateOfBirth")} type="date"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sexe</label>
                 <select {...register("gender")}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
@@ -150,6 +173,12 @@ export function AddEmployeeButton({ departments, managers }: Props) {
                   <option value="M">Masculin</option>
                   <option value="F">Féminin</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nationalité</label>
+                <input {...register("nationality")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="Malienne" />
               </div>
               {/* AJOUT: Statut matrimonial */}
               <div>
@@ -186,6 +215,54 @@ export function AddEmployeeButton({ departments, managers }: Props) {
             </div>
           </div>
 
+          {/* Section Adresse */}
+          <div>
+            <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">
+              <MapPin className="w-4 h-4 inline mr-1" /> Adresse & Localisation
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Adresse</label>
+                <input {...register("address")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="Quartier, rue..." />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ville</label>
+                <input {...register("city")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="Bamako" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Zone</label>
+                <input {...register("zone")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="Hamdallaye" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section Contact d'urgence */}
+          <div>
+            <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">
+              <Phone className="w-4 h-4 inline mr-1" /> Contact d&apos;urgence
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du contact</label>
+                <input {...register("emergencyContact")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="Nom complet" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Téléphone d&apos;urgence</label>
+                <input {...register("emergencyPhone")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="+223 70 00 00 00" />
+              </div>
+            </div>
+          </div>
+
           {/* Section contrat */}
           <div>
             <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">Contrat & Affectation</h3>
@@ -195,6 +272,14 @@ export function AddEmployeeButton({ departments, managers }: Props) {
                 <select {...register("contractType")}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
                   {["CDI", "CDD", "STAGE", "CONSULTANT"].map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Poste</label>
+                <select {...register("positionId")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  <option value="">Sélectionner</option>
+                  {positions.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
                 </select>
               </div>
               <div>
@@ -212,6 +297,12 @@ export function AddEmployeeButton({ departments, managers }: Props) {
                   <option value="">Sélectionner</option>
                   {managers.map((m) => <option key={m.id} value={m.id}>{m.firstName} {m.lastName}</option>)}
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Zone d&apos;affectation</label>
+                <input {...register("zone")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="Hamdallaye, ACI 2000..." />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date début contrat *</label>

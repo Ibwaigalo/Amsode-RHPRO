@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { employees, users } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, like, desc } from "drizzle-orm";
 import { z } from "zod";
 import { hash } from "bcryptjs";
 import { randomBytes } from "crypto";
@@ -12,13 +12,19 @@ const createSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   workEmail: z.string().email().optional(),
+  personalEmail: z.string().email().optional(),
   phone: z.string().optional(),
   cin: z.string().optional(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(["M", "F"]).optional(),
+  nationality: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  zone: z.string().optional(),
   statutMatrimonial: z.enum(["Célibataire", "Marié", "Veuf/Veuve", "Divorcé/Séparé"]).optional(),
   nbEnfantsCharge: z.number().min(0).max(10).optional(),
-  address: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  emergencyPhone: z.string().optional(),
   contractType: z.enum(["CDI", "CDD", "STAGE", "CONSULTANT"]),
   startDate: z.string(),
   endDate: z.string().optional(),
@@ -29,10 +35,22 @@ const createSchema = z.object({
   createAccount: z.boolean().optional().default(true),
 });
 
-function generateEmployeeNumber(): string {
+async function generateEmployeeNumber(): Promise<string> {
   const year = new Date().getFullYear().toString().slice(-2);
-  const rand = Math.floor(Math.random() * 9000) + 1000;
-  return `AMS-${year}-${rand}`;
+  
+  // Récupérer le dernier numéro de matricule de l'année en cours
+  const lastEmployee = await db.query.employees.findFirst({
+    where: like(employees.employeeNumber, `AMS-${year}-%`),
+    orderBy: [desc(employees.employeeNumber)],
+  });
+  
+  let nextNum = 1;
+  if (lastEmployee) {
+    const lastNum = parseInt(lastEmployee.employeeNumber.split("-")[2] || "0", 10);
+    nextNum = lastNum + 1;
+  }
+  
+  return `AMS-${year}-${nextNum.toString().padStart(4, "0")}`;
 }
 
 async function createUserAccount(employeeId: string, firstName: string, lastName: string, email: string | null) {
@@ -135,11 +153,15 @@ export async function POST(req: NextRequest) {
     firstName: data.firstName,
     lastName: data.lastName,
     workEmail: data.workEmail || null,
+    personalEmail: data.personalEmail || null,
     phone: data.phone,
     cin: data.cin,
     dateOfBirth: data.dateOfBirth,
     gender: data.gender,
+    nationality: data.nationality || "Malienne",
     address: data.address,
+    city: data.city || "Bamako",
+    zone: data.zone || "Bamako",
     contractType: data.contractType,
     startDate: data.startDate,
     endDate: data.endDate,
@@ -149,6 +171,8 @@ export async function POST(req: NextRequest) {
     baseSalary: data.baseSalary,
     statutMatrimonial: data.statutMatrimonial || "Célibataire",
     nbEnfantsCharge: data.nbEnfantsCharge || 0,
+    emergencyContact: data.emergencyContact,
+    emergencyPhone: data.emergencyPhone,
     isActive: true,
   }).returning();
 
