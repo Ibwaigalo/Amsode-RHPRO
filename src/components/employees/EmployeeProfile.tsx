@@ -12,8 +12,8 @@ interface Employee {
   firstName: string;
   lastName: string;
   workEmail: string | null;
-  phone: string | null;
   personalEmail: string | null;
+  phone: string | null;
   cin: string | null;
   dateOfBirth: string | null;
   gender: string | null;
@@ -33,6 +33,7 @@ interface Employee {
   chargesIts?: string | null;
   salaireNet?: string | null;
   isActive: boolean;
+  role?: string | null;
   leaveBalance: number | null;
   emergencyContact: string | null;
   emergencyPhone: string | null;
@@ -274,6 +275,16 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
               <InfoItem label="Projet" value={employee.department?.name || "—"} />
               <InfoItem label="Poste" value={employee.position?.title || "—"} />
               <InfoItem label="Supérieur hiérarchique" value={employee.manager ? `${employee.manager.firstName} ${employee.manager.lastName}` : "—"} />
+              <InfoItem label="Rôle" value={
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  employee.role === 'ADMIN_RH' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                  employee.role === 'MANAGER' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                  'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                }`}>
+                  {employee.role === 'ADMIN_RH' ? 'Administrateur RH' :
+                   employee.role === 'MANAGER' ? 'Manager' : 'Employé'}
+                </span>
+              } />
               <InfoItem label="Zone d'affectation" value={employee.zone || "—"} />
               <InfoItem label="Ville" value={employee.city || "—"} />
             </div>

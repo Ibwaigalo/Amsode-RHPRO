@@ -14,11 +14,11 @@ export interface EmployeeImportRow {
   address?: string;
   city?: string;
   zone?: string;
-  // AJOUT: Statut matrimonial et enfants à charge
   statutMatrimonial?: string;
   nbEnfantsCharge?: number;
   emergencyContact?: string;
   emergencyPhone?: string;
+  role?: string;
   contractType: "CDI" | "CDD" | "STAGE" | "CONSULTANT";
   startDate: string;
   endDate?: string;
@@ -85,6 +85,28 @@ function normalizeMaritalStatus(value: string | undefined): string {
   return statusMap[normalized] || "Célibataire";
 }
 
+function normalizeRole(value: string | undefined): string {
+  if (!value) return "EMPLOYE";
+  
+  const normalized = String(value).trim().toUpperCase();
+  
+  const roleMap: Record<string, string> = {
+    'EMPLOYE': 'EMPLOYE',
+    'EMPLOYEE': 'EMPLOYE',
+    'STAFF': 'EMPLOYE',
+    'MANAGER': 'MANAGER',
+    'CHEF': 'MANAGER',
+    'RESPONSABLE': 'MANAGER',
+    'ADMIN_RH': 'ADMIN_RH',
+    'ADMIN': 'ADMIN_RH',
+    'RH': 'ADMIN_RH',
+    'HR': 'ADMIN_RH',
+    'ADMINISTRATEUR': 'ADMIN_RH',
+  };
+  
+  return roleMap[normalized] || "EMPLOYE";
+}
+
 export function parseExcelFile(file: Buffer): ImportResult {
   const workbook = XLSX.read(file, { type: "buffer" });
   const sheetName = workbook.SheetNames[0];
@@ -139,6 +161,9 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "emergencyContact": "emergencyContact",
     "Téléphone urgence": "emergencyPhone",
     "emergencyPhone": "emergencyPhone",
+    // AJOUT: Rôle
+    "Rôle": "role",
+    "role": "role",
     // Fin AJOUT
     "Type de contrat": "contractType",
     "contractType": "contractType",
@@ -206,14 +231,13 @@ export function parseExcelFile(file: Buffer): ImportResult {
         address: normalizedRow.address ? String(normalizedRow.address).trim() : undefined,
         city: normalizedRow.city ? String(normalizedRow.city).trim() : undefined,
         zone: normalizedRow.zone ? String(normalizedRow.zone).trim() : undefined,
-        // AJOUT: Statut matrimonial avec fallback
         statutMatrimonial: normalizeMaritalStatus(normalizedRow.statutMatrimonial),
-        // AJOUT: Nombre d'enfants
         nbEnfantsCharge: normalizedRow.nbEnfantsCharge !== undefined 
           ? parseInt(String(normalizedRow.nbEnfantsCharge)) || 0 
           : 0,
         emergencyContact: normalizedRow.emergencyContact ? String(normalizedRow.emergencyContact).trim() : undefined,
         emergencyPhone: normalizedRow.emergencyPhone ? String(normalizedRow.emergencyPhone).trim() : undefined,
+        role: normalizeRole(normalizedRow.role),
         contractType: normalizedRow.contractType as "CDI" | "CDD" | "STAGE" | "CONSULTANT",
         startDate: parseDate(normalizedRow.startDate) || "",
         endDate: parseDate(normalizedRow.endDate) || undefined,
@@ -248,6 +272,7 @@ export function generateEmployeeTemplate(): Buffer {
       "Enfants à charge": 2,
       "Contact urgence": "Moussa Coulibaly",
       "Téléphone urgence": "+223 70 00 00 01",
+      "Rôle": "EMPLOYE",
       "Type de contrat": "CDI",
       "Date début": "2024-01-15",
       "Date fin": "",

@@ -32,6 +32,7 @@ const createSchema = z.object({
   positionId: z.string().uuid().optional(),
   managerId: z.string().uuid().optional(),
   baseSalary: z.string(),
+  role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).optional(),
   createAccount: z.boolean().optional().default(true),
 });
 
@@ -53,7 +54,7 @@ async function generateEmployeeNumber(): Promise<string> {
   return `AMS-${year}-${nextNum.toString().padStart(4, "0")}`;
 }
 
-async function createUserAccount(employeeId: string, firstName: string, lastName: string, email: string | null) {
+async function createUserAccount(employeeId: string, firstName: string, lastName: string, email: string | null, role: string = "EMPLOYE") {
   const tempPassword = randomBytes(8).toString("hex");
   const hashedPassword = await hash(tempPassword, 12);
   
@@ -61,7 +62,7 @@ async function createUserAccount(employeeId: string, firstName: string, lastName
     name: `${firstName} ${lastName}`,
     email: email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@amsode.ml`,
     password: hashedPassword,
-    role: "EMPLOYE",
+    role: role,
     employeeId: employeeId,
     isActive: true,
   }).returning();
@@ -175,6 +176,7 @@ export async function POST(req: NextRequest) {
     emergencyContact: data.emergencyContact,
     emergencyPhone: data.emergencyPhone,
     isActive: true,
+    role: data.role || "EMPLOYE",
   }).returning();
 
   let userAccount = null;
@@ -186,7 +188,8 @@ export async function POST(req: NextRequest) {
         created.id,
         created.firstName,
         created.lastName,
-        created.workEmail
+        created.workEmail,
+        data.role || "EMPLOYE"
       );
       userAccount = { email: account.user.email };
       tempPassword = account.tempPassword;

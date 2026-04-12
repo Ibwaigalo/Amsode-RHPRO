@@ -35,6 +35,7 @@ const employeeSchema = z.object({
   positionId: z.string().optional(),
   managerId: z.string().optional(),
   baseSalary: z.string().min(1, "Salaire requis"),
+  role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).default("EMPLOYE"),
   createAccount: z.boolean().default(true),
 });
 
@@ -60,6 +61,7 @@ export function AddEmployeeButton({ departments, positions, managers }: Props) {
       city: "Bamako",
       zone: "Bamako",
       nationality: "Malienne",
+      role: "EMPLOYE",
     },
   });
 
@@ -321,6 +323,18 @@ export function AddEmployeeButton({ departments, positions, managers }: Props) {
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
                   placeholder="250000" />
                 {errors.baseSalary && <p className="text-xs text-red-500 mt-1">{errors.baseSalary.message}</p>}
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Rôle dans le système</label>
+                <select {...register("role")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  <option value="EMPLOYE">Employé</option>
+                  <option value="MANAGER">Manager</option>
+                  <option value="ADMIN_RH">Administrateur RH</option>
+                </select>
+                <span className="text-xs text-gray-400 mt-1 block">
+                  Détermine les droits d&apos;accès de l&apos;employé
+                </span>
               </div>
             </div>
           </div>

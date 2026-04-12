@@ -98,7 +98,6 @@ export async function POST(req: NextRequest) {
           address: emp.address || null,
           city: emp.city || "Bamako",
           zone: emp.zone || null,
-          // AJOUT: Statut matrimonial et enfants à charge
           statutMatrimonial: emp.statutMatrimonial || "Célibataire",
           nbEnfantsCharge: emp.nbEnfantsCharge || 0,
           emergencyContact: emp.emergencyContact || null,
@@ -110,6 +109,7 @@ export async function POST(req: NextRequest) {
           positionId: positionId || null,
           baseSalary: emp.baseSalary,
           isActive: true,
+          role: emp.role || "EMPLOYE",
         }).returning();
         
         if (emp.managerId) {

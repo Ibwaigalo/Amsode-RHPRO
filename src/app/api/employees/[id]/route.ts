@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { employees } from "@/lib/schema";
+import { employees, users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -29,6 +29,7 @@ const updateSchema = z.object({
   departmentId: z.string().uuid().optional().or(z.literal("")),
   managerId: z.string().uuid().optional().or(z.literal("")),
   baseSalary: z.string().optional(),
+  role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -95,6 +96,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.managerId !== undefined) updateData.managerId = parsed.data.managerId || null;
     if (parsed.data.baseSalary !== undefined) updateData.baseSalary = parsed.data.baseSalary;
     if (parsed.data.isActive !== undefined) updateData.isActive = parsed.data.isActive;
+    if (parsed.data.role !== undefined) updateData.role = parsed.data.role;
+
+    // Si le rôle est modifié, mettre à jour aussi dans la table users
+    if (parsed.data.role !== undefined && role === "ADMIN_RH") {
+      const emp = await db.query.employees.findFirst({
+        where: eq(employees.id, id),
+      });
+      if (emp?.userId) {
+        await db.update(users)
+          .set({ role: parsed.data.role as any })
+          .where(eq(users.id, emp.userId));
+      }
+    }
 
     const [updated] = await db
       .update(employees)

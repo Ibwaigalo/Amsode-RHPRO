@@ -32,6 +32,7 @@ const employeeSchema = z.object({
   departmentId: z.string().uuid().optional().or(z.literal("")),
   managerId: z.string().uuid().optional().or(z.literal("")),
   baseSalary: z.string().optional(),
+  role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -61,6 +62,7 @@ interface Employee {
   endDate: string | null;
   baseSalary: string;
   isActive: boolean;
+  role?: string | null;
   departmentId?: string | null;
   positionId?: string | null;
   managerId?: string | null;
@@ -106,6 +108,7 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
       departmentId: employee.departmentId || "",
       managerId: employee.managerId || "",
       baseSalary: employee.baseSalary,
+      role: (employee.role as "EMPLOYE" | "MANAGER" | "ADMIN_RH") || "EMPLOYE",
       isActive: employee.isActive,
     },
   });
@@ -357,6 +360,15 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
               <input {...register("baseSalary")} type="number" min="0"
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
               {errors.baseSalary && <p className="text-xs text-red-500 mt-1">{errors.baseSalary.message}</p>}
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Rôle dans le système</label>
+              <select {...register("role")}
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                <option value="EMPLOYE">Employé</option>
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN_RH">Administrateur RH</option>
+              </select>
             </div>
             <div className="col-span-2 flex items-center">
               <label className="flex items-center gap-2 cursor-pointer">
