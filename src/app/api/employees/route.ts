@@ -54,7 +54,7 @@ async function generateEmployeeNumber(): Promise<string> {
   return `AMS-${year}-${nextNum.toString().padStart(4, "0")}`;
 }
 
-async function createUserAccount(employeeId: string, firstName: string, lastName: string, email: string | null, role: string = "EMPLOYE") {
+async function createUserAccount(employeeId: string, firstName: string, lastName: string, email: string | null, role: "EMPLOYE" | "MANAGER" | "ADMIN_RH" = "EMPLOYE") {
   const tempPassword = randomBytes(8).toString("hex");
   const hashedPassword = await hash(tempPassword, 12);
   
