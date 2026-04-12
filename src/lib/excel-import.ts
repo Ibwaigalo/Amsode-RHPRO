@@ -26,6 +26,15 @@ export interface EmployeeImportRow {
   positionId?: string;
   baseSalary: string;
   managerId?: string;
+  bloodGroup?: string;
+  educationLevel?: string;
+  fieldOfStudy?: string;
+  firstContractDate?: string;
+  contractRenewals?: number;
+  globalSalaryCost?: string;
+  inpsNumber?: string;
+  amoNumber?: string;
+  departureReason?: string;
 }
 
 export interface ImportResult {
@@ -144,27 +153,21 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "address": "address",
     "Ville": "city",
     "city": "city",
-    // AJOUT: Statut matrimonial
     "Statut matrimonial": "statutMatrimonial",
     "statutMatrimonial": "statutMatrimonial",
     "statut": "statutMatrimonial",
     "Marital Status": "statutMatrimonial",
-    " maritalStatus": "statutMatrimonial",
-    // AJOUT: Nombre d'enfants
     "Enfants à charge": "nbEnfantsCharge",
     "nbEnfantsCharge": "nbEnfantsCharge",
     "enfants": "nbEnfantsCharge",
     "Nb enfants": "nbEnfantsCharge",
     "Children": "nbEnfantsCharge",
-    // AJOUT: Contact d'urgence
     "Contact urgence": "emergencyContact",
     "emergencyContact": "emergencyContact",
     "Téléphone urgence": "emergencyPhone",
     "emergencyPhone": "emergencyPhone",
-    // AJOUT: Rôle
     "Rôle": "role",
     "role": "role",
-    // Fin AJOUT
     "Type de contrat": "contractType",
     "contractType": "contractType",
     "Date début": "startDate",
@@ -183,6 +186,34 @@ export function parseExcelFile(file: Buffer): ImportResult {
     "Salaire brut": "baseSalary",
     "Supérieur Hiérarchique": "managerId",
     "managerId": "managerId",
+    "Groupe sanguin": "bloodGroup",
+    "bloodGroup": "bloodGroup",
+    "Niveau d'étude": "educationLevel",
+    "educationLevel": "educationLevel",
+    "Niveau d'étude": "educationLevel",
+    "Niveau étude": "educationLevel",
+    "Domaine d'étude": "fieldOfStudy",
+    "fieldOfStudy": "fieldOfStudy",
+    "Domaine étude": "fieldOfStudy",
+    "Date 1er contrat": "firstContractDate",
+    "firstContractDate": "firstContractDate",
+    "Date entrée": "firstContractDate",
+    "Date d'entrée": "firstContractDate",
+    "Nbre renouvellements": "contractRenewals",
+    "contractRenewals": "contractRenewals",
+    "Renouvellements": "contractRenewals",
+    "Coût salarial global": "globalSalaryCost",
+    "globalSalaryCost": "globalSalaryCost",
+    "Coût global": "globalSalaryCost",
+    "N° INPS": "inpsNumber",
+    "inpsNumber": "inpsNumber",
+    "INPS": "inpsNumber",
+    "N° AMO": "amoNumber",
+    "amoNumber": "amoNumber",
+    "AMO": "amoNumber",
+    "Motif de départ": "departureReason",
+    "departureReason": "departureReason",
+    "Motif départ": "departureReason",
   };
 
   json.forEach((row: any, index: number) => {
@@ -245,6 +276,17 @@ export function parseExcelFile(file: Buffer): ImportResult {
         positionId: normalizedRow.positionId ? String(normalizedRow.positionId) : undefined,
         baseSalary: String(normalizedRow.baseSalary),
         managerId: normalizedRow.managerId ? String(normalizedRow.managerId).trim() : undefined,
+        bloodGroup: normalizedRow.bloodGroup ? String(normalizedRow.bloodGroup).trim() : undefined,
+        educationLevel: normalizedRow.educationLevel ? String(normalizedRow.educationLevel).trim() : undefined,
+        fieldOfStudy: normalizedRow.fieldOfStudy ? String(normalizedRow.fieldOfStudy).trim() : undefined,
+        firstContractDate: parseDate(normalizedRow.firstContractDate) || undefined,
+        contractRenewals: normalizedRow.contractRenewals !== undefined 
+          ? parseInt(String(normalizedRow.contractRenewals)) || 0 
+          : 0,
+        globalSalaryCost: normalizedRow.globalSalaryCost ? String(normalizedRow.globalSalaryCost) : undefined,
+        inpsNumber: normalizedRow.inpsNumber ? String(normalizedRow.inpsNumber).trim() : undefined,
+        amoNumber: normalizedRow.amoNumber ? String(normalizedRow.amoNumber).trim() : undefined,
+        departureReason: normalizedRow.departureReason ? String(normalizedRow.departureReason).trim() : undefined,
       });
     } catch (e: any) {
       errors.push({ row: index + 2, message: e.message });
@@ -274,13 +316,22 @@ export function generateEmployeeTemplate(): Buffer {
       "Téléphone urgence": "+223 70 00 00 01",
       "Rôle": "EMPLOYE",
       "Type de contrat": "CDI",
+      "Date d'entrée": "2024-01-15",
       "Date début": "2024-01-15",
       "Date fin": "",
       "Projet": "",
       "Poste": "",
       "Zone": "Bamako",
       "Salaire de base": "250000",
+      "Coût salarial global": "",
       "Supérieur Hiérarchique": "",
+      "Groupe sanguin": "O+",
+      "Niveau d'étude": "BAC+5",
+      "Domaine d'étude": "Informatique",
+      "Nbre renouvellements": 0,
+      "N° INPS": "",
+      "N° AMO": "",
+      "Motif de départ": "",
     },
     {
       "Prénom": "Mamadou",
@@ -298,14 +349,24 @@ export function generateEmployeeTemplate(): Buffer {
       "Enfants à charge": 0,
       "Contact urgence": "",
       "Téléphone urgence": "",
+      "Rôle": "EMPLOYE",
       "Type de contrat": "CDI",
+      "Date d'entrée": "2024-02-01",
       "Date début": "2024-02-01",
       "Date fin": "",
       "Projet": "",
       "Poste": "",
       "Zone": "Kayes",
       "Salaire de base": "300000",
+      "Coût salarial global": "",
       "Supérieur Hiérarchique": "",
+      "Groupe sanguin": "A+",
+      "Niveau d'étude": "BAC+3",
+      "Domaine d'étude": "Gestion",
+      "Nbre renouvellements": 0,
+      "N° INPS": "",
+      "N° AMO": "",
+      "Motif de départ": "",
     },
   ];
 

@@ -29,8 +29,17 @@ const updateSchema = z.object({
   departmentId: z.string().uuid().optional().or(z.literal("")),
   managerId: z.string().uuid().optional().or(z.literal("")),
   baseSalary: z.string().optional(),
+  globalSalaryCost: z.string().optional(),
   role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).optional(),
   isActive: z.boolean().optional(),
+  bloodGroup: z.string().optional(),
+  educationLevel: z.string().optional(),
+  fieldOfStudy: z.string().optional(),
+  firstContractDate: z.string().optional(),
+  contractRenewals: z.number().min(0).optional(),
+  inpsNumber: z.string().optional(),
+  amoNumber: z.string().optional(),
+  departureReason: z.string().optional(),
 });
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -95,8 +104,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.departmentId !== undefined) updateData.departmentId = parsed.data.departmentId || null;
     if (parsed.data.managerId !== undefined) updateData.managerId = parsed.data.managerId || null;
     if (parsed.data.baseSalary !== undefined) updateData.baseSalary = parsed.data.baseSalary;
+    if (parsed.data.globalSalaryCost !== undefined) updateData.globalSalaryCost = parsed.data.globalSalaryCost || null;
     if (parsed.data.isActive !== undefined) updateData.isActive = parsed.data.isActive;
     if (parsed.data.role !== undefined) updateData.role = parsed.data.role;
+    if (parsed.data.bloodGroup !== undefined) updateData.bloodGroup = parsed.data.bloodGroup || null;
+    if (parsed.data.educationLevel !== undefined) updateData.educationLevel = parsed.data.educationLevel || null;
+    if (parsed.data.fieldOfStudy !== undefined) updateData.fieldOfStudy = parsed.data.fieldOfStudy || null;
+    if (parsed.data.firstContractDate !== undefined) updateData.firstContractDate = parsed.data.firstContractDate || null;
+    if (parsed.data.contractRenewals !== undefined) updateData.contractRenewals = parsed.data.contractRenewals;
+    if (parsed.data.inpsNumber !== undefined) updateData.inpsNumber = parsed.data.inpsNumber || null;
+    if (parsed.data.amoNumber !== undefined) updateData.amoNumber = parsed.data.amoNumber || null;
+    if (parsed.data.departureReason !== undefined) updateData.departureReason = parsed.data.departureReason || null;
 
     // Si le rôle est modifié, mettre à jour aussi dans la table users
     if (parsed.data.role !== undefined && role === "ADMIN_RH") {

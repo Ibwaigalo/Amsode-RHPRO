@@ -26,6 +26,7 @@ interface Employee {
   startDate: string;
   endDate: string | null;
   baseSalary: string;
+  globalSalaryCost?: string | null;
   statutMatrimonial?: string | null;
   nbEnfantsCharge?: number | null;
   chargesInps?: string | null;
@@ -40,6 +41,14 @@ interface Employee {
   department?: { id: string; name: string; location: string | null };
   position?: { id: string; title: string };
   manager?: { id: string; firstName: string; lastName: string } | null;
+  bloodGroup?: string | null;
+  educationLevel?: string | null;
+  fieldOfStudy?: string | null;
+  firstContractDate?: string | null;
+  contractRenewals?: number | null;
+  inpsNumber?: string | null;
+  amoNumber?: string | null;
+  departureReason?: string | null;
 }
 
 interface Props {
@@ -105,7 +114,53 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
     }
   };
 
+  const getAnciennete = (firstContractDate: string | null | undefined) => {
+    if (!firstContractDate) return null;
+    try {
+      const start = parseISO(firstContractDate);
+      const today = new Date();
+      let years = today.getFullYear() - start.getFullYear();
+      let months = today.getMonth() - start.getMonth();
+      if (today.getDate() < start.getDate()) {
+        months--;
+      }
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+      if (years === 0) {
+        return `${months} mois`;
+      }
+      return `${years} an${years > 1 ? 's' : ''}, ${months} mois`;
+    } catch {
+      return null;
+    }
+  };
+
+  const getContractRemaining = (endDate: string | null) => {
+    if (!endDate) return null;
+    try {
+      const end = parseISO(endDate);
+      const today = new Date();
+      if (end < today) return "Contrat expiré";
+      
+      let days = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (days <= 30) return `${days} jour${days > 1 ? 's' : ''}`;
+      
+      let months = Math.floor(days / 30);
+      if (months <= 12) return `${months} mois`;
+      
+      let years = Math.floor(months / 12);
+      months = months % 12;
+      return `${years} an${years > 1 ? 's' : ''}, ${months} mois`;
+    } catch {
+      return null;
+    }
+  };
+
   const age = getAge(employee.dateOfBirth);
+  const anciennete = getAnciennete(employee.firstContractDate);
+  const contractRemaining = getContractRemaining(employee.endDate);
 
   const handlePrint = () => {
     window.print();
@@ -261,8 +316,37 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
               <InfoItem label="Âge" value={age ? `${age} ans` : "—"} />
               <InfoItem label="Sexe" value={employee.gender === "M" ? "Masculin" : employee.gender === "F" ? "Féminin" : "—"} />
               <InfoItem label="Nationalité" value={employee.nationality || "Malienne"} />
+              <InfoItem label="Groupe sanguin" value={employee.bloodGroup || "—"} />
               <InfoItem label="Email personnel" value={employee.personalEmail || "—"} />
               <InfoItem label="Adresse" value={employee.address || "—"} />
+              <InfoItem label="Ville" value={employee.city || "—"} />
+            </div>
+          </div>
+
+          {/* Section Formation */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Award className="w-5 h-5 text-purple-600" />
+              Formation & Qualifications
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <InfoItem label="Niveau d'étude" value={employee.educationLevel || "—"} />
+              <InfoItem label="Domaine d'étude" value={employee.fieldOfStudy || "—"} />
+            </div>
+          </div>
+
+          {/* Section Informations professionnelles */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-green-600" />
+              Informations professionnelles
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <InfoItem label="Date d'entrée (1er contrat)" value={formatDate(employee.firstContractDate)} />
+              <InfoItem label="Ancienneté" value={anciennete || formatDate(employee.firstContractDate) ? anciennete || "—" : "—"} />
+              <InfoItem label="Nbre renouvellements" value={employee.contractRenewals !== null ? `${employee.contractRenewals}` : "—"} />
+              <InfoItem label="N° INPS" value={employee.inpsNumber || "—"} />
+              <InfoItem label="N° AMO" value={employee.amoNumber || "—"} />
             </div>
           </div>
 
@@ -299,8 +383,15 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
               <InfoItem label="Type de contrat" value={employee.contractType} />
               <InfoItem label="Date de début" value={formatDate(employee.startDate)} />
               <InfoItem label="Date de fin" value={formatDate(employee.endDate)} />
+              <InfoItem 
+                label="Durée restante" 
+                value={
+                  <span className={contractRemaining === "Contrat expiré" ? "text-red-600 font-medium" : ""}>
+                    {contractRemaining || "—"}
+                  </span>
+                } 
+              />
               <InfoItem label="Solde congés" value={employee.leaveBalance !== null ? `${employee.leaveBalance} jours` : "—"} />
-              {/* AJOUT: Statut matrimonial et enfants à charge */}
               <InfoItem 
                 label="Statut matrimonial" 
                 value={(
@@ -318,11 +409,16 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
                   </span>
                 )} 
               />
-              {/* Fin AJOUT */}
               <div className="col-span-2">
                 <p className="text-xs text-gray-500 mb-1">Salaire de base</p>
                 <p className="text-xl font-bold text-green-600">{formatSalary(employee.baseSalary)}</p>
               </div>
+              {employee.globalSalaryCost && (
+                <div className="col-span-2">
+                  <p className="text-xs text-gray-500 mb-1">Coût salarial global</p>
+                  <p className="text-lg font-bold text-blue-600">{formatSalary(employee.globalSalaryCost)}</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -351,6 +447,18 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
               <div className="grid grid-cols-2 gap-4">
                 <InfoItem label="Nom" value={employee.emergencyContact || "—"} />
                 <InfoItem label="Téléphone" value={employee.emergencyPhone || "—"} />
+              </div>
+            </div>
+          )}
+
+          {!employee.isActive && (
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-800 p-6">
+              <h3 className="font-semibold text-red-800 dark:text-red-300 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                Motif de départ
+              </h3>
+              <div className="text-sm text-red-700 dark:text-red-300">
+                {employee.departureReason || "Non spécifié"}
               </div>
             </div>
           )}

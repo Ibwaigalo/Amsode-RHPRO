@@ -37,9 +37,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function DashboardCharts({ chartsData }: { chartsData?: ChartsData }) {
   const salaryByDept = chartsData?.salaryByDept?.length ? chartsData.salaryByDept : [
-    { dept: "Direction", masse: 0 },
-    { dept: "RH", masse: 0 },
-    { dept: "Finance", masse: 0 },
+    { dept: "Projet A", masse: 0 },
+    { dept: "Projet B", masse: 0 },
+    { dept: "Projet C", masse: 0 },
   ];
 
   const contractTypes = chartsData?.contractTypes?.length ? chartsData.contractTypes : [
@@ -83,7 +83,7 @@ export default function DashboardCharts({ chartsData }: { chartsData?: ChartsDat
 
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Masse salariale par département</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Masse salariale par projet</h3>
           <span className="text-xs text-gray-400">FCFA</span>
         </div>
         <ResponsiveContainer width="100%" height={200}>

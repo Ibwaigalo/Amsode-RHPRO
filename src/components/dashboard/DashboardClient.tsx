@@ -1,5 +1,5 @@
 'use client';
-import { Users, Calendar, AlertCircle } from 'lucide-react';
+import { Users, Calendar, AlertCircle, AlertTriangle, DollarSign, TrendingUp, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
@@ -13,15 +13,31 @@ const DashboardCharts = dynamic(
   }
 );
 
-interface Stats { activeEmployees: number; pendingLeaves: number; openJobs?: number; pendingEvals?: number; teamCount?: number; teamLeaves?: number; myLeaves?: number; }
+interface Stats { 
+  activeEmployees: number; 
+  pendingLeaves: number; 
+  openJobs?: number; 
+  pendingEvals?: number; 
+  teamCount?: number; 
+  teamLeaves?: number; 
+  myLeaves?: number; 
+  femaleCount?: number;
+  maleCount?: number;
+  totalGlobalCost?: number;
+  contractAlerts?: { id: string; name: string; endDate: string; contractType: string }[];
+}
 
 interface ChartsData {
   salaryByDept: { dept: string; masse: number }[];
   deptEmployees: { dept: string; count: number }[];
   totalMass: number;
+  totalGlobalCost: number;
   contractTypes: { name: string; value: number }[];
   monthlyHeadcount: { month: string; effectif: number; recrutements: number; departs: number }[];
   monthlyLeaves: { month: string; paie: number; maladie: number; autres: number }[];
+  femaleCount: number;
+  maleCount: number;
+  contractAlerts: { id: string; name: string; endDate: string; contractType: string }[];
 }
 
 const containerVariants = {
@@ -41,6 +57,26 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
   const isAdmin = role === 'ADMIN_RH' || role === 'PRESIDENT';
   const isManager = role === 'MANAGER';
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('fr-ML', { 
+      style: 'currency', 
+      currency: 'XOF', 
+      maximumFractionDigits: 0 
+    }).format(value);
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const getDaysRemaining = (endDate: string) => {
+    const end = new Date(endDate);
+    const now = new Date();
+    const days = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return days;
+  };
+
   const kpis = [
     { label: isManager ? 'Mon Équipe' : isAdmin ? 'Membres Actifs' : 'Mon Profil', value: stats.activeEmployees || 0, icon: Users, color: 'brand' },
     { label: isAdmin ? 'Congés en Attente' : isManager ? 'Équipe - En Attente' : 'Mes Congés', value: stats.pendingLeaves || 0, icon: Calendar, color: 'green' },
@@ -49,6 +85,9 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
   const colorMap: Record<string, string> = {
     brand: 'bg-[#0090D1]/10 text-[#0090D1] dark:bg-[#0090D1]/20 dark:text-[#0090D1]',
     green: 'bg-[#86C440]/10 text-[#86C440] dark:bg-[#86C440]/20 dark:text-[#86C440]',
+    orange: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+    red: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+    purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
   };
 
   return (
@@ -78,7 +117,7 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
 
       {/* KPI Cards */}
       <motion.div 
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         variants={itemVariants}
       >
         {kpis.map(kpi => (
@@ -97,7 +136,84 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{kpi.label}</p>
           </motion.div>
         ))}
+
+        {isAdmin && chartsData && (
+          <>
+            <motion.div 
+              className="card group hover:shadow-md transition-shadow"
+              whileHover={{ scale: 1.02, y: -2 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorMap['purple']}`}>
+                  <User className="w-5 h-5" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{chartsData.femaleCount}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Femmes</p>
+            </motion.div>
+
+            <motion.div 
+              className="card group hover:shadow-md transition-shadow"
+              whileHover={{ scale: 1.02, y: -2 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorMap['brand']}`}>
+                  <User className="w-5 h-5" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{chartsData.maleCount}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Hommes</p>
+            </motion.div>
+          </>
+        )}
       </motion.div>
+
+      {/* Contract Alerts & Global Payroll */}
+      {isAdmin && chartsData && chartsData.contractAlerts && chartsData.contractAlerts.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <div className="card border-red-200 dark:border-red-800/50">
+            <h2 className="text-base font-semibold text-red-700 dark:text-red-300 mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Alertes Fin de Contrat ({chartsData.contractAlerts.length})
+            </h2>
+            <div className="space-y-2">
+              {chartsData.contractAlerts.map(alert => {
+                const daysLeft = getDaysRemaining(alert.endDate);
+                return (
+                  <div key={alert.id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{alert.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{alert.contractType} - expire le {formatDate(alert.endDate)}</p>
+                    </div>
+                    <span className={`text-sm font-medium ${daysLeft <= 30 ? 'text-red-600' : 'text-orange-600'}`}>
+                      {daysLeft} jour{daysLeft > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Global Payroll */}
+      {isAdmin && chartsData && (
+        <motion.div variants={itemVariants}>
+          <div className="card bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Masse Salariale Globale</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(chartsData.totalGlobalCost)}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Charts - only for Admin/President */}
       {(role === 'ADMIN_RH' || role === 'PRESIDENT') && chartsData && chartsData.salaryByDept && (

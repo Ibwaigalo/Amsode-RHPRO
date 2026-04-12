@@ -108,8 +108,17 @@ export async function POST(req: NextRequest) {
           departmentId: departmentId || null,
           positionId: positionId || null,
           baseSalary: emp.baseSalary,
+          globalSalaryCost: emp.globalSalaryCost || null,
           isActive: true,
           role: emp.role || "EMPLOYE",
+          bloodGroup: emp.bloodGroup || null,
+          educationLevel: emp.educationLevel || null,
+          fieldOfStudy: emp.fieldOfStudy || null,
+          firstContractDate: emp.firstContractDate || null,
+          contractRenewals: emp.contractRenewals || 0,
+          inpsNumber: emp.inpsNumber || null,
+          amoNumber: emp.amoNumber || null,
+          departureReason: emp.departureReason || null,
         }).returning();
         
         if (emp.managerId) {

@@ -148,14 +148,27 @@ export function ChargeCalculatorInline({
 
   if (salaryBrut <= 0) return null;
 
+  const totalCharges = result.chargesInps + result.chargesAmo + result.chargesIts;
+
   return (
-    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-      <span>INPS: -{formatXOF(result.chargesInps)}</span>
-      <span>AMO: -{formatXOF(result.chargesAmo)}</span>
-      <span>ITS: -{formatXOF(result.chargesIts)}</span>
-      <span className="font-semibold text-green-600 dark:text-green-400">
-        Net: {formatXOF(result.salaryNet)}
-      </span>
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+        <span>INPS: <span className="text-red-500">-{formatXOF(result.chargesInps)}</span></span>
+        <span>AMO: <span className="text-red-500">-{formatXOF(result.chargesAmo)}</span></span>
+        <span>ITS: <span className="text-red-500">-{formatXOF(result.chargesIts)}</span></span>
+      </div>
+      <div className="flex items-center justify-between pt-2 border-t border-blue-200 dark:border-blue-800">
+        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Charges totales:</span>
+        <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+          -{formatXOF(totalCharges)}
+        </span>
+      </div>
+      <div className="flex items-center justify-between bg-green-100 dark:bg-green-900/30 rounded-lg p-2">
+        <span className="text-sm font-semibold text-green-700 dark:text-green-400">Salaire Net:</span>
+        <span className="text-lg font-bold text-green-700 dark:text-green-400">
+          {formatXOF(result.salaryNet)}
+        </span>
+      </div>
     </div>
   );
 }

@@ -32,8 +32,17 @@ const createSchema = z.object({
   positionId: z.string().uuid().optional(),
   managerId: z.string().uuid().optional(),
   baseSalary: z.string(),
+  globalSalaryCost: z.string().optional(),
   role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).optional(),
   createAccount: z.boolean().optional().default(true),
+  bloodGroup: z.string().optional(),
+  educationLevel: z.string().optional(),
+  fieldOfStudy: z.string().optional(),
+  firstContractDate: z.string().optional(),
+  contractRenewals: z.number().min(0).optional(),
+  inpsNumber: z.string().optional(),
+  amoNumber: z.string().optional(),
+  departureReason: z.string().optional(),
 });
 
 async function generateEmployeeNumber(): Promise<string> {
@@ -171,12 +180,21 @@ export async function POST(req: NextRequest) {
     positionId: data.positionId,
     managerId: data.managerId || null,
     baseSalary: data.baseSalary,
+    globalSalaryCost: data.globalSalaryCost || null,
     statutMatrimonial: data.statutMatrimonial || "Célibataire",
     nbEnfantsCharge: data.nbEnfantsCharge || 0,
     emergencyContact: data.emergencyContact,
     emergencyPhone: data.emergencyPhone,
     isActive: true,
     role: data.role || "EMPLOYE",
+    bloodGroup: data.bloodGroup || null,
+    educationLevel: data.educationLevel || null,
+    fieldOfStudy: data.fieldOfStudy || null,
+    firstContractDate: data.firstContractDate || null,
+    contractRenewals: data.contractRenewals || 0,
+    inpsNumber: data.inpsNumber || null,
+    amoNumber: data.amoNumber || null,
+    departureReason: data.departureReason || null,
   }).returning();
 
   let userAccount = null;

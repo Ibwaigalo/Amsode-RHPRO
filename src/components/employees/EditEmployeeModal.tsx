@@ -34,6 +34,15 @@ const employeeSchema = z.object({
   baseSalary: z.string().optional(),
   role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).optional(),
   isActive: z.boolean().optional(),
+  bloodGroup: z.string().optional(),
+  educationLevel: z.string().optional(),
+  fieldOfStudy: z.string().optional(),
+  firstContractDate: z.string().optional(),
+  contractRenewals: z.number().min(0).optional(),
+  globalSalaryCost: z.string().optional(),
+  inpsNumber: z.string().optional(),
+  amoNumber: z.string().optional(),
+  departureReason: z.string().optional(),
 });
 
 type EmployeeForm = z.infer<typeof employeeSchema>;
@@ -61,12 +70,21 @@ interface Employee {
   startDate: string;
   endDate: string | null;
   baseSalary: string;
+  globalSalaryCost?: string | null;
   isActive: boolean;
   role?: string | null;
   departmentId?: string | null;
   positionId?: string | null;
   managerId?: string | null;
   manager?: { id: string; firstName: string; lastName: string } | null;
+  bloodGroup?: string | null;
+  educationLevel?: string | null;
+  fieldOfStudy?: string | null;
+  firstContractDate?: string | null;
+  contractRenewals?: number | null;
+  inpsNumber?: string | null;
+  amoNumber?: string | null;
+  departureReason?: string | null;
 }
 
 interface Props {
@@ -108,8 +126,17 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
       departmentId: employee.departmentId || "",
       managerId: employee.managerId || "",
       baseSalary: employee.baseSalary,
+      globalSalaryCost: employee.globalSalaryCost || "",
       role: (employee.role as "EMPLOYE" | "MANAGER" | "ADMIN_RH") || "EMPLOYE",
       isActive: employee.isActive,
+      bloodGroup: employee.bloodGroup || "",
+      educationLevel: employee.educationLevel || "",
+      fieldOfStudy: employee.fieldOfStudy || "",
+      firstContractDate: employee.firstContractDate ? employee.firstContractDate.split("T")[0] : "",
+      contractRenewals: employee.contractRenewals || 0,
+      inpsNumber: employee.inpsNumber || "",
+      amoNumber: employee.amoNumber || "",
+      departureReason: employee.departureReason || "",
     },
   });
 
@@ -289,6 +316,51 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
             </div>
           </div>
 
+          {/* Section Formation */}
+          <div>
+            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wide mb-3">
+              Formation & Qualifications
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Groupe sanguin</label>
+                <select {...register("bloodGroup")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  <option value="">Choisir</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Niveau d&apos;étude</label>
+                <select {...register("educationLevel")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  <option value="">Choisir</option>
+                  <option value="CEP">CEP</option>
+                  <option value="BEPC">BEPC</option>
+                  <option value="BAC">Baccalauréat</option>
+                  <option value="BAC+1">BAC+1</option>
+                  <option value="BAC+2">BAC+2 (BTS/DUT)</option>
+                  <option value="BAC+3">BAC+3 (Licence)</option>
+                  <option value="BAC+4">BAC+4 (Maîtrise)</option>
+                  <option value="BAC+5">BAC+5 (Master)</option>
+                  <option value="BAC+6+">Doctorat / BAC+6+</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Domaine d&apos;étude</label>
+                <input {...register("fieldOfStudy")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+            </div>
+          </div>
+
           {/* Section Contact d'urgence */}
           <div>
             <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">
@@ -345,6 +417,11 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
               </select>
             </div>
             <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date d&apos;entrée (1er contrat)</label>
+              <input {...register("firstContractDate")} type="date"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+            </div>
+            <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date début contrat *</label>
               <input {...register("startDate")} type="date"
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
@@ -353,6 +430,28 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date fin (CDD)</label>
               <input {...register("contractEnd")} type="date"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nbre renouvellements</label>
+              <input {...register("contractRenewals", { valueAsNumber: true })} type="number" min="0"
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+            </div>
+            <div className="col-span-2 grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">N° INPS</label>
+                <input {...register("inpsNumber")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">N° AMO</label>
+                <input {...register("amoNumber")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Coût salarial global (FCFA)</label>
+              <input {...register("globalSalaryCost")} type="number" min="0"
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
             </div>
             <div className="col-span-2">
@@ -370,13 +469,20 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
                 <option value="ADMIN_RH">Administrateur RH</option>
               </select>
             </div>
-            <div className="col-span-2 flex items-center">
+            <div className="col-span-2 flex items-center gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" {...register("isActive")} defaultChecked={employee.isActive} 
                   className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Membre actif</span>
               </label>
             </div>
+            {!employee.isActive && (
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Motif de départ</label>
+                <input {...register("departureReason")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+            )}
           </div>
 
           {/* AJOUT: Calculateur de charges en temps réel */}

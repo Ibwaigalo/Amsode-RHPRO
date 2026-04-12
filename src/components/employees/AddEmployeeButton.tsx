@@ -35,8 +35,18 @@ const employeeSchema = z.object({
   positionId: z.string().optional(),
   managerId: z.string().optional(),
   baseSalary: z.string().min(1, "Salaire requis"),
+  globalSalaryCost: z.string().optional(),
   role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).default("EMPLOYE"),
   createAccount: z.boolean().default(true),
+  // Nouveaux champs
+  bloodGroup: z.string().optional(),
+  educationLevel: z.string().optional(),
+  fieldOfStudy: z.string().optional(),
+  firstContractDate: z.string().optional(),
+  contractRenewals: z.number().min(0).default(0),
+  inpsNumber: z.string().optional(),
+  amoNumber: z.string().optional(),
+  departureReason: z.string().optional(),
 });
 
 type EmployeeForm = z.infer<typeof employeeSchema>;
@@ -317,14 +327,7 @@ export function AddEmployeeButton({ departments, positions, managers }: Props) {
                 <input {...register("endDate")} type="date"
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
               </div>
-              <div className="col-span-2">
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Salaire de base (FCFA) *</label>
-                <input {...register("baseSalary")} type="number" min="0"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
-                  placeholder="250000" />
-                {errors.baseSalary && <p className="text-xs text-red-500 mt-1">{errors.baseSalary.message}</p>}
-              </div>
-              <div className="col-span-2">
+              <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Rôle dans le système</label>
                 <select {...register("role")}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
@@ -333,25 +336,111 @@ export function AddEmployeeButton({ departments, positions, managers }: Props) {
                   <option value="ADMIN_RH">Administrateur RH</option>
                 </select>
                 <span className="text-xs text-gray-400 mt-1 block">
-                  Détermine les droits d&apos;accès de l&apos;employé
+                  Droits d&apos;accès
                 </span>
               </div>
             </div>
+
+            {/* Salaire et Aperçu côte à côte */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Salaire de base (FCFA) *</label>
+                  <input {...register("baseSalary")} type="number" min="0"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                    placeholder="250000" />
+                  {errors.baseSalary && <p className="text-xs text-red-500 mt-1">{errors.baseSalary.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Coût salarial global (FCFA)</label>
+                  <input {...register("globalSalaryCost")} type="number" min="0"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                    placeholder="Optionnel" />
+                  <span className="text-xs text-gray-400 mt-1 block">Salaire + charges patronales</span>
+                </div>
+              </div>
+              {salaryValue > 0 && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
+                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">
+                    💰 Aperçu salaire net (Mali 2026)
+                  </h4>
+                  <ChargeCalculatorInline
+                    salaryBrut={salaryValue}
+                    statutMatrimonial={(watchedStatut as MaritalStatus) || "Célibataire"}
+                    nbEnfantsCharge={watchedEnfants || 0}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* AJOUT: Calculateur de charges en temps réel */}
-          {salaryValue > 0 && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
-              <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">
-                💰 Aperçu du salaire net (Charges Mali 2026)
-              </h4>
-              <ChargeCalculatorInline
-                salaryBrut={salaryValue}
-                statutMatrimonial={(watchedStatut as MaritalStatus) || "Célibataire"}
-                nbEnfantsCharge={watchedEnfants || 0}
-              />
+          {/* Section Informations professionnelles */}
+          <div>
+            <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">
+              📋 Informations professionnelles
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Groupe sanguin</label>
+                <select {...register("bloodGroup")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  <option value="">Sélectionner</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Niveau d&apos;étude</label>
+                <select {...register("educationLevel")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0090D1]">
+                  <option value="">Sélectionner</option>
+                  <option value="CEP">CEP</option>
+                  <option value="BEPC">BEPC</option>
+                  <option value="BAC">Baccalauréat</option>
+                  <option value="BAC+2">Bac+2 (BTS/DUT)</option>
+                  <option value="BAC+3">Bac+3 (Licence)</option>
+                  <option value="BAC+4">Bac+4 (Master 1)</option>
+                  <option value="BAC+5">Bac+5 (Master 2/Ingénieur)</option>
+                  <option value="Doctorat">Doctorat</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Domaine d&apos;étude</label>
+                <input {...register("fieldOfStudy")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="Ex: Informatique, Gestion, Droit..." />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date d&apos;entrée (1er contrat)</label>
+                <input {...register("firstContractDate")} type="date"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nbre renouvellements contrat</label>
+                <input {...register("contractRenewals", { valueAsNumber: true })} type="number" min="0"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="0" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">N° INPS</label>
+                <input {...register("inpsNumber")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="N° Immatriculation INPS" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">N° AMO</label>
+                <input {...register("amoNumber")}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="N° Immatriculation AMO" />
+              </div>
             </div>
-          )}
+          </div>
 
           {/* Option création compte */}
           <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">

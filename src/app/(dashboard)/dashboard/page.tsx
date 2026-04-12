@@ -53,6 +53,10 @@ async function getDashboardStats() {
       total: sql<number>`COALESCE(SUM(${employees.baseSalary})::numeric, 0)`,
     }).from(employees).where(eq(employees.isActive, true));
 
+    const totalGlobalCostResult = await db.select({
+      total: sql<number>`COALESCE(SUM(COALESCE(${employees.globalSalaryCost}, ${employees.baseSalary})::numeric), 0)`,
+    }).from(employees).where(eq(employees.isActive, true));
+
     const contractTypes = await db.select({
       type: employees.contractType,
       count: count(),
@@ -60,6 +64,32 @@ async function getDashboardStats() {
       .from(employees)
       .where(eq(employees.isActive, true))
       .groupBy(employees.contractType);
+
+    const genderStats = await db.select({
+      gender: employees.gender,
+      count: count(),
+    })
+      .from(employees)
+      .where(eq(employees.isActive, true))
+      .groupBy(employees.gender);
+
+    const femaleCount = genderStats.find(g => g.gender === 'F')?.count || 0;
+    const maleCount = genderStats.find(g => g.gender === 'M')?.count || 0;
+
+    const contractAlerts = await db.select({
+      id: employees.id,
+      firstName: employees.firstName,
+      lastName: employees.lastName,
+      endDate: employees.endDate,
+      contractType: employees.contractType,
+    })
+      .from(employees)
+      .where(and(
+        eq(employees.isActive, true),
+        sql`${employees.endDate} IS NOT NULL`,
+        sql`${employees.endDate} <= NOW() + INTERVAL '90 days'`,
+        sql`${employees.endDate} >= NOW()`
+      ));
 
     const now = new Date();
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
@@ -134,15 +164,37 @@ async function getDashboardStats() {
         .filter(d => d.name !== null)
         .map(d => ({ dept: d.name!, count: Number(d.count) })),
       totalMass: totalMassResult[0]?.total || 0,
+      totalGlobalCost: totalGlobalCostResult[0]?.total || 0,
       contractTypes: contractTypes
         .filter(c => c.type)
         .map(c => ({ name: c.type!, value: Number(c.count) })),
       monthlyHeadcount,
       monthlyLeaves,
+      femaleCount: Number(femaleCount),
+      maleCount: Number(maleCount),
+      contractAlerts: contractAlerts.map(c => ({
+        id: c.id,
+        name: `${c.firstName} ${c.lastName}`,
+        endDate: c.endDate,
+        contractType: c.contractType,
+      })),
     };
   } catch (e: any) {
     console.error("Dashboard stats error:", e);
-    return { activeEmployees: 0, pendingLeaves: 0, salaryByDept: [], deptEmployees: [], totalMass: 0, contractTypes: [], monthlyHeadcount: [], monthlyLeaves: [] };
+    return { 
+      activeEmployees: 0, 
+      pendingLeaves: 0, 
+      salaryByDept: [], 
+      deptEmployees: [], 
+      totalMass: 0, 
+      totalGlobalCost: 0,
+      contractTypes: [], 
+      monthlyHeadcount: [], 
+      monthlyLeaves: [],
+      femaleCount: 0,
+      maleCount: 0,
+      contractAlerts: [],
+    };
   }
 }
 
@@ -204,8 +256,12 @@ export default async function DashboardPage() {
     salaryByDept: stats.salaryByDept,
     deptEmployees: stats.deptEmployees,
     totalMass: stats.totalMass,
+    totalGlobalCost: stats.totalGlobalCost,
     contractTypes: stats.contractTypes,
     monthlyHeadcount: stats.monthlyHeadcount,
     monthlyLeaves: stats.monthlyLeaves,
+    femaleCount: stats.femaleCount,
+    maleCount: stats.maleCount,
+    contractAlerts: stats.contractAlerts,
   } : undefined} />;
 }

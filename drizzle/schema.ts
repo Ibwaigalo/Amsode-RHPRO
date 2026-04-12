@@ -116,6 +116,17 @@ export const employees = pgTable('employees', {
   leaveBalance: integer('leave_balance').default(18),
   emergencyContact: text('emergency_contact'),
   emergencyPhone: text('emergency_phone'),
+  // Nouveaux champs
+  bloodGroup: varchar('blood_group', { length: 10 }),
+  educationLevel: varchar('education_level', { length: 100 }),
+  fieldOfStudy: varchar('field_of_study', { length: 100 }),
+  firstContractDate: date('first_contract_date'),
+  contractRenewals: integer('contract_renewals').default(0),
+  inpsNumber: varchar('inps_number', { length: 50 }),
+  amoNumber: varchar('amo_number', { length: 50 }),
+  departureReason: text('departure_reason'),
+  // Coût salarial global (inclut tous les avantages)
+  globalSalaryCost: decimal('global_salary_cost', { precision: 15, scale: 2 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
