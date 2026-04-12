@@ -12,15 +12,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSidebar } from './DashboardClientLayout';
 
 const navItems = [
-  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE'] },
-  { href: '/employees', label: 'Membres', icon: Users, roles: ['ADMIN_RH', 'MANAGER'] },
-  { href: '/payroll', label: 'Paie', icon: DollarSign, roles: ['ADMIN_RH'] },
-  { href: '/leaves', label: 'Congés', icon: Calendar, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE'] },
-  { href: '/recruitment', label: 'Recrutement', icon: Briefcase, roles: ['ADMIN_RH', 'MANAGER'] },
-  { href: '/evaluations', label: 'Évaluations', icon: Star, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE'] },
-  { href: '/training', label: 'Formations', icon: BookOpen, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE'] },
-  { href: '/documents', label: 'Documents', icon: FileText, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE'] },
-  { href: '/settings', label: 'Paramètres', icon: Settings, roles: ['ADMIN_RH'] },
+  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'PRESIDENT'] },
+  { href: '/employees', label: 'Membres', icon: Users, roles: ['ADMIN_RH', 'MANAGER', 'PRESIDENT'] },
+  { href: '/payroll', label: 'Paie', icon: DollarSign, roles: ['ADMIN_RH', 'PRESIDENT'] },
+  { href: '/leaves', label: 'Congés', icon: Calendar, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'PRESIDENT'] },
+  { href: '/recruitment', label: 'Recrutement', icon: Briefcase, roles: ['ADMIN_RH', 'MANAGER', 'PRESIDENT'] },
+  { href: '/evaluations', label: 'Évaluations', icon: Star, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'PRESIDENT'] },
+  { href: '/training', label: 'Formations', icon: BookOpen, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'PRESIDENT'] },
+  { href: '/documents', label: 'Documents', icon: FileText, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'PRESIDENT'] },
+  { href: '/settings', label: 'Paramètres', icon: Settings, roles: ['ADMIN_RH', 'PRESIDENT'] },
 ];
 
 interface SidebarProps { userRole: string; }

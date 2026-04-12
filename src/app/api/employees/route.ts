@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const role = (session.user as any).role;
-  if (!["ADMIN_RH", "MANAGER"].includes(role)) {
+  if (!["ADMIN_RH", "MANAGER", "PRESIDENT"].includes(role)) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 

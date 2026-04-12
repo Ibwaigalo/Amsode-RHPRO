@@ -11,6 +11,7 @@ const roleLabels: Record<string, string> = {
   ADMIN_RH: 'Administrateur RH',
   MANAGER: 'Manager',
   EMPLOYE: 'Membre',
+  PRESIDENT: 'Président',
 };
 
 function ChangePasswordModal({ onClose }: { onClose: () => void }) {

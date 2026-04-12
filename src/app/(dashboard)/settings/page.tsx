@@ -16,7 +16,7 @@ export default async function SettingsPage() {
 
   const userRole = (session.user as any).role;
   
-  if (userRole !== "ADMIN_RH") {
+  if (userRole !== "ADMIN_RH" && userRole !== "PRESIDENT") {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Paramètres</h1>

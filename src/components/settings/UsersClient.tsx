@@ -89,6 +89,7 @@ export default function UsersClient() {
     ADMIN_RH: "Administrateur RH",
     MANAGER: "Manager",
     EMPLOYE: "Employé",
+    PRESIDENT: "Président",
   };
 
   if (loading) {

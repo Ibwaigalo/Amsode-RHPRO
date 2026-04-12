@@ -210,7 +210,7 @@ export default function EmployeesClient({ employees, departments, positions, use
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Membres</h1>
           <p className="text-sm text-gray-500 mt-1">Gérez les membres de vos projets</p>
         </div>
-        {(userRole === "ADMIN_RH" || userRole === "MANAGER") && (
+        {(userRole === "ADMIN_RH" || userRole === "MANAGER" || userRole === "PRESIDENT") && (
           <div className="flex gap-2">
             <ImportEmployeesButton />
             <AddEmployeeButton departments={departments} positions={positions} managers={managers} />
