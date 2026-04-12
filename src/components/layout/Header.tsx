@@ -112,22 +112,22 @@ export default function Header({ user }: { user: any }) {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 md:px-6 py-3 flex items-center justify-between gap-2 md:gap-4 z-10">
-      <div className="flex items-center gap-2">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 md:px-6 py-2 md:py-3 flex items-center justify-between gap-2 md:gap-4 z-10">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
         <button 
           onClick={() => setIsOpen(true)}
-          className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
         >
           <Menu className="w-5 h-5" />
         </button>
         
-        <div className="relative flex-1 max-w-xs md:max-w-md">
+        <div className="relative flex-1 min-w-0 max-w-[200px] sm:max-w-xs md:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Rechercher..." />
         </div>
       </div>
 
-      <div className="flex items-center gap-1 md:gap-2">
+      <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
         <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -169,7 +169,7 @@ export default function Header({ user }: { user: any }) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700 relative">
+        <div className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700 relative hidden sm:flex">
           <button onClick={() => setMenuOpen(!menuOpen)} className="flex items-center gap-2">
             <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
               {user?.image ? <img src={user.image} className="w-8 h-8 rounded-full" alt="" /> : <User className="w-4 h-4 text-amber-700" />}
@@ -197,6 +197,29 @@ export default function Header({ user }: { user: any }) {
           )}
         </div>
       </div>
+
+      <button onClick={() => setMenuOpen(!menuOpen)} className="sm:hidden flex items-center gap-2">
+        <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
+          {user?.image ? <img src={user.image} className="w-8 h-8 rounded-full" alt="" /> : <User className="w-4 h-4 text-amber-700" />}
+        </div>
+      </button>
+
+      {menuOpen && (
+        <div className="absolute right-2 top-full mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50 sm:hidden">
+          <button onClick={() => { setMenuOpen(false); setShowPasswordModal(true); }}
+            className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <KeyRound className="w-4 h-4" /> Changer mot de passe
+          </button>
+          <Link href="/settings" onClick={() => setMenuOpen(false)}
+            className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <Settings className="w-4 h-4" /> Paramètres
+          </Link>
+          <button onClick={() => signOut({ callbackUrl: '/auth/login' })}
+            className="w-full px-4 py-2 text-left text-sm flex items-center gap-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <LogOut className="w-4 h-4" /> Déconnexion
+          </button>
+        </div>
+      )}
 
       {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
     </header>

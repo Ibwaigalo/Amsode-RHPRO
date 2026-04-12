@@ -209,7 +209,7 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
   };
 
   return (
-    <div ref={profileRef} className="p-6 space-y-6">
+    <div ref={profileRef} className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Fiche Membre
@@ -238,9 +238,9 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Left column - Profile card */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 sm:p-6">
           <div className="text-center">
             <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-3xl font-bold mb-4">
               {employee.photoUrl ? (

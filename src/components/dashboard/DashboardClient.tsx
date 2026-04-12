@@ -99,17 +99,17 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
     >
       {/* Welcome */}
       <motion.div 
-        className="flex items-center gap-4"
+        className="flex items-center gap-3"
         variants={itemVariants}
       >
-        <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm bg-white">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shadow-sm bg-white flex-shrink-0">
           <img src="/logo.png" alt="AMSODE" className="w-full h-full object-contain" />
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
             Bonjour, {user?.name || 'Utilisateur'} 👋
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 hidden sm:block">
             {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
@@ -117,54 +117,54 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
 
       {/* KPI Cards */}
       <motion.div 
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
         variants={itemVariants}
       >
         {kpis.map(kpi => (
           <motion.div 
             key={kpi.label} 
-            className="card group hover:shadow-md transition-shadow"
+            className="card group hover:shadow-md transition-shadow p-4"
             whileHover={{ scale: 1.02, y: -2 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorMap[kpi.color]}`}>
-                <kpi.icon className="w-5 h-5" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center ${colorMap[kpi.color]}`}>
+                <kpi.icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{kpi.value}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{kpi.label}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{kpi.value}</p>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{kpi.label}</p>
           </motion.div>
         ))}
 
         {isAdmin && chartsData && (
           <>
             <motion.div 
-              className="card group hover:shadow-md transition-shadow"
+              className="card group hover:shadow-md transition-shadow p-4"
               whileHover={{ scale: 1.02, y: -2 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorMap['purple']}`}>
-                  <User className="w-5 h-5" />
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center ${colorMap['purple']}`}>
+                  <User className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{chartsData.femaleCount}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Femmes</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{chartsData.femaleCount}</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Femmes</p>
             </motion.div>
 
             <motion.div 
-              className="card group hover:shadow-md transition-shadow"
+              className="card group hover:shadow-md transition-shadow p-4"
               whileHover={{ scale: 1.02, y: -2 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorMap['brand']}`}>
-                  <User className="w-5 h-5" />
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center ${colorMap['brand']}`}>
+                  <User className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{chartsData.maleCount}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Hommes</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{chartsData.maleCount}</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Hommes</p>
             </motion.div>
           </>
         )}
@@ -174,21 +174,23 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
       {isAdmin && chartsData && chartsData.contractAlerts && chartsData.contractAlerts.length > 0 && (
         <motion.div variants={itemVariants}>
           <div className="card border-red-200 dark:border-red-800/50">
-            <h2 className="text-base font-semibold text-red-700 dark:text-red-300 mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              Alertes Fin de Contrat ({chartsData.contractAlerts.length})
+            <h2 className="text-sm sm:text-base font-semibold text-red-700 dark:text-red-300 mb-3 sm:mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Alertes Fin de Contrat</span>
+              <span className="sm:hidden">Alertes Contrat</span>
+              <span className="bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full text-xs">{chartsData.contractAlerts.length}</span>
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-48 sm:max-h-none overflow-y-auto">
               {chartsData.contractAlerts.map(alert => {
                 const daysLeft = getDaysRemaining(alert.endDate);
                 return (
-                  <div key={alert.id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                  <div key={alert.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{alert.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{alert.contractType} - expire le {formatDate(alert.endDate)}</p>
+                      <p className="font-medium text-gray-900 dark:text-white text-sm">{alert.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{alert.contractType} - {formatDate(alert.endDate)}</p>
                     </div>
-                    <span className={`text-sm font-medium ${daysLeft <= 30 ? 'text-red-600' : 'text-orange-600'}`}>
-                      {daysLeft} jour{daysLeft > 1 ? 's' : ''}
+                    <span className={`text-sm font-medium self-start sm:self-auto ${daysLeft <= 30 ? 'text-red-600' : 'text-orange-600'}`}>
+                      {daysLeft}j
                     </span>
                   </div>
                 );
@@ -201,14 +203,14 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
       {/* Global Payroll */}
       {isAdmin && chartsData && (
         <motion.div variants={itemVariants}>
-          <div className="card bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800/50">
-            <div className="flex items-center justify-between">
+          <div className="card bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800/50 p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Masse Salariale Globale</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(chartsData.totalGlobalCost)}</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">Masse Salariale Globale</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400 truncate">{formatCurrency(chartsData.totalGlobalCost)}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>

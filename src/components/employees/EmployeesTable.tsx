@@ -4,7 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   Search, Download, Eye, Edit2, Trash2,
   ChevronLeft, ChevronRight, Loader2, X,
-  User, Phone, Mail, Calendar, Briefcase,
+  User, Phone, Mail, Calendar, Briefcase, Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -380,80 +380,163 @@ const EmployeeRow = memo(function EmployeeRow({
   onDelete,
 }: TableRowProps) {
   return (
-    <tr>
-      <td>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-800 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {emp.photoUrl
-              ? <img src={emp.photoUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
-              : `${emp.firstName[0]}${emp.lastName[0]}`}
+    <>
+      {/* Desktop Table Row */}
+      <tr className="hidden md:table-row">
+        <td>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-800 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {emp.photoUrl
+                ? <img src={emp.photoUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
+                : `${emp.firstName[0]}${emp.lastName[0]}`}
+            </div>
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white text-sm">
+                {emp.firstName} {emp.lastName}
+              </p>
+              <p className="text-xs text-gray-500">{emp.employeeNumber} &#8226; {emp.email}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-gray-900 dark:text-white text-sm">
-              {emp.firstName} {emp.lastName}
-            </p>
-            <p className="text-xs text-gray-500">{emp.employeeNumber} &#8226; {emp.email}</p>
-          </div>
-        </div>
-      </td>
-      <td>
-        <p className="text-sm text-gray-700 dark:text-gray-300">{emp.positionTitle ?? "&#8212;"}</p>
-        <p className="text-xs text-gray-500">{emp.departmentName ?? "&#8212;"}</p>
-      </td>
-      <td>
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {emp.managerName ?? "—"}
-        </span>
-      </td>
-      <td>
-        <div className="space-y-1">
-          <span className={cn(
-            "text-xs px-2 py-0.5 rounded-full font-medium",
-            CONTRACT_COLORS[emp.contractType] ?? "bg-gray-100 text-gray-700"
-          )}>
-            {emp.contractType}
+        </td>
+        <td>
+          <p className="text-sm text-gray-700 dark:text-gray-300">{emp.positionTitle ?? "&#8212;"}</p>
+          <p className="text-xs text-gray-500">{emp.departmentName ?? "&#8212;"}</p>
+        </td>
+        <td className="hidden lg:table-cell">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {emp.managerName ?? "—"}
           </span>
-          {isExpiringSoon(emp.contractEnd) && (
-            <p className="text-xs text-red-500 font-medium">&#9888; Expire bient&#244;t</p>
-          )}
-        </div>
-      </td>
-      <td>
-        <span className="text-sm font-medium text-gray-900 dark:text-white">
-          {formatSalary(emp.baseSalary)}
-        </span>
-      </td>
-      <td>
-        <span className={cn(
-          "text-xs px-2 py-1 rounded-full font-medium",
-          emp.isActive ? "badge-approved" : "badge-rejected"
-        )}>
-          {emp.isActive ? "Actif" : "Inactif"}
-        </span>
-      </td>
-      <td>
-        <div className="flex items-center justify-end gap-1">
-          <button
-            onClick={() => onView?.(emp)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-            title="Voir le profil">
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onEdit?.(emp)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-            title="Modifier">
-            <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onDelete?.(emp)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-            title="Archiver">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </td>
-    </tr>
+        </td>
+        <td>
+          <div className="space-y-1">
+            <span className={cn(
+              "text-xs px-2 py-0.5 rounded-full font-medium",
+              CONTRACT_COLORS[emp.contractType] ?? "bg-gray-100 text-gray-700"
+            )}>
+              {emp.contractType}
+            </span>
+            {isExpiringSoon(emp.contractEnd) && (
+              <p className="text-xs text-red-500 font-medium">&#9888; Expire bient&#244;t</p>
+            )}
+          </div>
+        </td>
+        <td>
+          <span className="text-sm font-medium text-gray-900 dark:text-white">
+            {formatSalary(emp.baseSalary)}
+          </span>
+        </td>
+        <td>
+          <span className={cn(
+            "text-xs px-2 py-1 rounded-full font-medium",
+            emp.isActive ? "badge-approved" : "badge-rejected"
+          )}>
+            {emp.isActive ? "Actif" : "Inactif"}
+          </span>
+        </td>
+        <td>
+          <div className="flex items-center justify-end gap-1">
+            <button
+              onClick={() => onView?.(emp)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              title="Voir le profil">
+              <Eye className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onEdit?.(emp)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+              title="Modifier">
+              <Edit2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDelete?.(emp)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              title="Archiver">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </td>
+      </tr>
+      
+      {/* Mobile Card View */}
+      <tr className="md:hidden">
+        <td colSpan={6} className="p-3">
+          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-800 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  {emp.photoUrl
+                    ? <img src={emp.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
+                    : `${emp.firstName[0]}${emp.lastName[0]}`}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {emp.firstName} {emp.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500">{emp.employeeNumber}</p>
+                </div>
+              </div>
+              <span className={cn(
+                "text-xs px-2 py-1 rounded-full font-medium flex-shrink-0",
+                emp.isActive ? "badge-approved" : "badge-rejected"
+              )}>
+                {emp.isActive ? "Actif" : "Inactif"}
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <p className="text-xs text-gray-500">Poste</p>
+                <p className="text-gray-900 dark:text-white">{emp.positionTitle ?? "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Projet</p>
+                <p className="text-gray-900 dark:text-white">{emp.departmentName ?? "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Contrat</p>
+                <span className={cn(
+                  "text-xs px-2 py-0.5 rounded-full font-medium",
+                  CONTRACT_COLORS[emp.contractType] ?? "bg-gray-100 text-gray-700"
+                )}>
+                  {emp.contractType}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Salaire</p>
+                <p className="font-medium text-gray-900 dark:text-white">{formatSalary(emp.baseSalary)}</p>
+              </div>
+            </div>
+            
+            {isExpiringSoon(emp.contractEnd) && (
+              <p className="text-xs text-red-500 font-medium bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                &#9888; Contrat expire bientôt
+              </p>
+            )}
+            
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+              <button
+                onClick={() => onView?.(emp)}
+                className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                title="Voir">
+                <Eye className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onEdit?.(emp)}
+                className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                title="Modifier">
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete?.(emp)}
+                className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                title="Archiver">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </>
   );
 });
 
@@ -582,13 +665,13 @@ export function EmployeesTable({
           )}
           <div className="overflow-x-auto">
             <table className="w-full data-table">
-              <thead>
+              <thead className="hidden md:table-header-group">
                 <tr>
                   <th className="text-left">Employ&#233;</th>
                   <th className="text-left">Poste / D&#233;partement</th>
-                  <th className="text-left">Manager</th>
+                  <th className="text-left hidden lg:table-cell">Manager</th>
                   <th className="text-left">Contrat</th>
-                  <th className="text-left">Salaire de base</th>
+                  <th className="text-left">Salaire</th>
                   <th className="text-left">Statut</th>
                   <th className="text-right">Actions</th>
                 </tr>
@@ -596,8 +679,17 @@ export function EmployeesTable({
               <tbody>
                 {employees.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-gray-400">
+                    <td colSpan={6} className="text-center py-12 text-gray-400 hidden md:table-cell">
                       Aucun employ&#233; trouv&#233;
+                    </td>
+                  </tr>
+                ) : employees.length === 0 ? (
+                  <tr className="md:hidden">
+                    <td colSpan={1}>
+                      <div className="text-center py-8 text-gray-400">
+                        <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>Aucun employ&#233; trouv&#233;</p>
+                      </div>
                     </td>
                   </tr>
                 ) : employees.map(emp => (

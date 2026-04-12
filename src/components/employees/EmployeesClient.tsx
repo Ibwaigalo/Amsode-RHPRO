@@ -201,7 +201,7 @@ export default function EmployeesClient({ employees, departments, positions, use
       animate={{ opacity: 1 }}
     >
       <motion.div 
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -211,7 +211,7 @@ export default function EmployeesClient({ employees, departments, positions, use
           <p className="text-sm text-gray-500 mt-1">Gérez les membres de vos projets</p>
         </div>
         {(userRole === "ADMIN_RH" || userRole === "MANAGER" || userRole === "PRESIDENT") && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <ImportEmployeesButton />
             <AddEmployeeButton departments={departments} positions={positions} managers={managers} />
             <CreateAccountsButton />
