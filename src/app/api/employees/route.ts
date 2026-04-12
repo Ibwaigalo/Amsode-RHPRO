@@ -147,9 +147,10 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+  const employeeNumber = await generateEmployeeNumber();
 
   const [created] = await db.insert(employees).values({
-    employeeNumber: generateEmployeeNumber(),
+    employeeNumber,
     firstName: data.firstName,
     lastName: data.lastName,
     workEmail: data.workEmail || null,

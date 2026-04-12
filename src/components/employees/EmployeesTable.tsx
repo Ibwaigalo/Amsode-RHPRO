@@ -72,18 +72,18 @@ interface Props {
   page: number;
   pageSize: number;
   searchParams: { q?: string; department?: string; contract?: string };
-  onView?: (employee: Employee) => void;
-  onEdit?: (employee: Employee) => void;
-  onDelete?: (employee: Employee) => void;
+  onView?: (employee: any) => void;
+  onEdit?: (employee: any) => void;
+  onDelete?: (employee: any) => void;
   managers?: { id: string; firstName: string; lastName: string }[];
 }
 
 interface TableRowProps {
   emp: EmployeeTableRow;
   fullEmployee?: Employee;
-  onView: (e: Employee) => void;
-  onEdit: (e: Employee) => void;
-  onDelete: (e: Employee) => void;
+  onView: (e: any) => void;
+  onEdit: (e: any) => void;
+  onDelete: (e: any) => void;
 }
 
 const CONTRACT_COLORS: Record<string, string> = {
@@ -108,10 +108,9 @@ function ViewModal({
   employee,
   onClose,
 }: {
-  employee: Employee;
+  employee: EmployeeTableRow;
   onClose: () => void;
 }) {
-  console.log("📋 ViewModal - données reçues:", JSON.stringify(employee, null, 2));
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={onClose}>
@@ -195,7 +194,7 @@ function EditModal({
   onClose,
   onSaved,
 }: {
-  employee: Employee;
+  employee: EmployeeTableRow;
   departments: { id: string; name: string }[];
   onClose: () => void;
   onSaved: () => void;
@@ -322,7 +321,7 @@ function DeleteModal({
   onClose,
   onDeleted,
 }: {
-  employee: Employee;
+  employee: EmployeeTableRow;
   onClose: () => void;
   onDeleted: () => void;
 }) {
@@ -484,9 +483,9 @@ export function EmployeesTable({
 
   const closeModal = useCallback(() => setModal(null), []);
 
-  const handleView   = useCallback((emp: Employee) => setModal({ type: "view",   employee: emp as EmployeeTableRow, fullEmployee: emp }), []);
-  const handleEdit   = useCallback((emp: Employee) => setModal({ type: "edit",   employee: emp as EmployeeTableRow, fullEmployee: emp }), []);
-  const handleDelete = useCallback((emp: Employee) => setModal({ type: "delete", employee: emp as EmployeeTableRow, fullEmployee: emp }), []);
+  const handleView   = useCallback((emp: Employee) => setModal({ type: "view",   employee: emp as unknown as EmployeeTableRow, fullEmployee: emp }), []);
+  const handleEdit   = useCallback((emp: Employee) => setModal({ type: "edit",   employee: emp as unknown as EmployeeTableRow, fullEmployee: emp }), []);
+  const handleDelete = useCallback((emp: Employee) => setModal({ type: "delete", employee: emp as unknown as EmployeeTableRow, fullEmployee: emp }), []);
 
   const updateQuery = useCallback((params: Record<string, string>) => {
     const sp = new URLSearchParams();
@@ -604,11 +603,11 @@ export function EmployeesTable({
                 ) : employees.map(emp => (
                   <EmployeeRow
                     key={emp.id}
-                    emp={emp}
+                    emp={emp as unknown as EmployeeTableRow}
                     onView={handleView}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
-                    fullEmployee={emp as Employee}
+                    fullEmployee={emp}
                   />
                 ))}
               </tbody>

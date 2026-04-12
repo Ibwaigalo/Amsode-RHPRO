@@ -113,7 +113,7 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
   const watchedBaseSalary = watch("baseSalary");
   const watchedStatut = watch("statutMatrimonial");
   const watchedEnfants = watch("nbEnfantsCharge");
-  const salaryValue = parseFloat(watchedBaseSalary) || 0;
+  const salaryValue = parseFloat(watchedBaseSalary || "0") || 0;
 
   const onSubmit = async (data: EmployeeForm) => {
     setIsSubmitting(true);
@@ -123,7 +123,7 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          contractEnd: data.endDate,
+          contractEnd: data.contractEnd,
         }),
       });
 
@@ -349,7 +349,7 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date fin (CDD)</label>
-              <input {...register("endDate")} type="date"
+              <input {...register("contractEnd")} type="date"
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
             </div>
             <div className="col-span-2">
