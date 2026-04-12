@@ -1,7 +1,7 @@
 "use client";
 // src/components/employees/EmployeeProfile.tsx
 import { ReactNode, useEffect, useRef } from 'react';
-import { X, Mail, Phone, MapPin, Calendar, User, FileText, Award, AlertCircle, Heart, Users } from "lucide-react";
+import { X, Mail, Phone, MapPin, Calendar, User, FileText, Award, AlertCircle, Heart, Users, Printer, Download } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChargeCalculator, MARITAL_STATUS_OPTIONS } from "@/components/payroll/ChargeCalculator";
@@ -67,6 +67,13 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
         }
       }, 100);
     }
+
+    const style = document.createElement('style');
+    style.innerHTML = printStyles;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
   }, [employee.id]);
   
   const formatSalary = (s: string) =>
@@ -99,18 +106,80 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
 
   const age = getAge(employee.dateOfBirth);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownload = () => {
+    const printContent = profileRef.current;
+    if (!printContent) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Fiche Membre - ${employee.firstName} ${employee.lastName}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0090D1; padding-bottom: 15px; }
+            .header h1 { color: #0090D1; font-size: 24px; margin-bottom: 5px; }
+            .header h2 { font-size: 18px; color: #666; }
+            .photo { width: 80px; height: 80px; background: #f0f0f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 24px; font-weight: bold; }
+            .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
+            .card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; }
+            .card h3 { color: #0090D1; font-size: 14px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+            .item { margin-bottom: 8px; }
+            .item label { font-size: 11px; color: #888; display: block; }
+            .item span { font-size: 13px; font-weight: 500; }
+            .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #999; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
   return (
     <div ref={profileRef} className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Fiche Membre
         </h1>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          <X className="w-5 h-5 text-gray-500" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrint}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors print:hidden"
+            title="Imprimer la fiche"
+          >
+            <Printer className="w-5 h-5 text-gray-500" />
+          </button>
+          <button
+            onClick={handleDownload}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors print:hidden"
+            title="Télécharger la fiche"
+          >
+            <Download className="w-5 h-5 text-gray-500" />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors print:hidden"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -297,3 +366,12 @@ function Briefcase({ className }: { className?: string }) {
     </svg>
   );
 }
+
+const printStyles = `
+  @media print {
+    body * { visibility: hidden; }
+    .no-print { display: none !important; }
+    [data-print] { visibility: visible; }
+    [data-print] * { visibility: visible; }
+  }
+`;
