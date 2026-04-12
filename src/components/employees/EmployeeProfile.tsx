@@ -89,7 +89,7 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
   const formatSalary = (s: string) =>
     new Intl.NumberFormat("fr-ML", { style: "currency", currency: "XOF", maximumFractionDigits: 0 }).format(parseFloat(s));
 
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: string | null | undefined) => {
     if (!date) return "—";
     try {
       return format(parseISO(date), "dd MMMM yyyy", { locale: fr });
