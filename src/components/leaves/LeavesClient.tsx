@@ -505,7 +505,7 @@ export default function LeavesClient({ requests, balances, userRole, currentEmpl
                           <span className="text-xs text-gray-400" title="En attente validation manager">En attente manager</span>
                         ) : req.status === "APPROVED" && isOnLeave && userRole === "ADMIN_RH" ? (
                           <button 
-                            onClick={() => handleReturnFromLeave(req.employeeId, `${req.employeeName} ${req.employeeLastName}`)}
+                            onClick={() => handleReturnFromLeave(req.employeeId, `${req.employeeName || ""} ${req.employeeLastName || ""}`)}
                             className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg transition-colors"
                             title="Marquer comme revenu de congé"
                           >
