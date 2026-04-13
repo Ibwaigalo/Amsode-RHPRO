@@ -82,6 +82,7 @@ async function getData() {
 
   const enrichEmployee = (emp: typeof allEmployees[0]) => ({
     ...emp,
+    isActive: emp.isActive ?? true,
     contractType: emp.contractType || "CDI",
     department: allDepartments.find((d) => d.id === emp.departmentId),
     position: allPositions.find((p) => p.id === emp.positionId),
