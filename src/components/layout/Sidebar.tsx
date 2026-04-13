@@ -107,7 +107,9 @@ export default function Sidebar({ userRole }: SidebarProps) {
 
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto scrollbar-thin">
         {visible.map(item => {
-          const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          const isExact = pathname === item.href;
+          const isChild = item.href !== '/dashboard' && pathname.startsWith(item.href + '/');
+          const active = isExact || isChild;
           return (
             <Link key={item.href} href={item.href}
               onClick={() => isMobile && setIsOpen(false)}
