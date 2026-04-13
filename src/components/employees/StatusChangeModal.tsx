@@ -248,7 +248,7 @@ export function StatusChangeModal({ employee, onClose, onConfirm }: Props) {
                       <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                       <div className="text-sm text-yellow-800 dark:text-yellow-200">
                         <p className="font-medium mb-1">Attention: Cette action est irréversible</p>
-                        <p>L'employé sera marqué comme inactif et ne pourra plus se connecter.</p>
+                        <p>L&apos;employé sera marqué comme inactif et ne pourra plus se connecter.</p>
                       </div>
                     </div>
                   </div>
@@ -258,7 +258,7 @@ export function StatusChangeModal({ employee, onClose, onConfirm }: Props) {
               {selectedStatus === "EN_CONGE" && (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    L'employé reste actif mais sera signalé comme étant en congé.
+                    L&apos;employé reste actif mais sera signalé comme étant en congé.
                   </p>
                 </div>
               )}
