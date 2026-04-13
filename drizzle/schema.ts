@@ -83,7 +83,8 @@ export const positions = pgTable('positions', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const employeeStatusEnum = pgEnum('employee_status', ['CELIBATAIRE', 'MARIE', 'VEUF', 'DIVORCE', 'SEPARE']);
+export const matrimonialStatusEnum = pgEnum('matrimonial_status', ['CELIBATAIRE', 'MARIE', 'VEUF', 'DIVORCE', 'SEPARE']);
+export const workStatusEnum = pgEnum('work_status', ['ACTIVE', 'ON_TRIAL', 'EN_CONGE', 'SUSPENDED', 'RESIGNED', 'TERMINATED', 'CONTRACT_ENDED', 'JOB_ABANDONMENT', 'MUTUAL_AGREEMENT', 'RETIRED']);
 
 export const employees = pgTable('employees', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -125,6 +126,11 @@ export const employees = pgTable('employees', {
   inpsNumber: varchar('inps_number', { length: 50 }),
   amoNumber: varchar('amo_number', { length: 50 }),
   departureReason: text('departure_reason'),
+  workStatus: workStatusEnum('work_status').default('ACTIVE'),
+  statusDate: date('status_date'),
+  statusReason: text('status_reason'),
+  noticePeriodEnd: date('notice_period_end'),
+  exitInterviewDone: boolean('exit_interview_done').default(false),
   // Coût salarial global (inclut tous les avantages)
   globalSalaryCost: decimal('global_salary_cost', { precision: 15, scale: 2 }),
   createdAt: timestamp('created_at').defaultNow(),

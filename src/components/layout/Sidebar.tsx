@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '../../lib/utils/cn';
 import {
   LayoutDashboard, Users, DollarSign, Calendar, Briefcase,
-  Star, BookOpen, FileText, Settings, LogOut, ChevronLeft, Menu, X
+  Star, BookOpen, FileText, Settings, LogOut, ChevronLeft, Menu, X, UserMinus
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +14,7 @@ import { useSidebar } from './DashboardClientLayout';
 const navItems = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'PRESIDENT'] },
   { href: '/employees', label: 'Membres', icon: Users, roles: ['ADMIN_RH', 'MANAGER', 'PRESIDENT'] },
+  { href: '/employees/exits', label: 'Sorties', icon: UserMinus, roles: ['ADMIN_RH', 'PRESIDENT'] },
   { href: '/payroll', label: 'Paie', icon: DollarSign, roles: ['ADMIN_RH', 'PRESIDENT'] },
   { href: '/leaves', label: 'Congés', icon: Calendar, roles: ['ADMIN_RH', 'MANAGER', 'EMPLOYE', 'PRESIDENT'] },
   { href: '/recruitment', label: 'Recrutement', icon: Briefcase, roles: ['ADMIN_RH', 'MANAGER', 'PRESIDENT'] },

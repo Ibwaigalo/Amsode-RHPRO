@@ -94,6 +94,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
             link: "/leaves",
           });
         }
+        await db
+          .update(employees)
+          .set({ 
+            workStatus: "EN_CONGE",
+            updatedAt: new Date()
+          })
+          .where(eq(employees.id, leave.employeeId));
       }
     }
 

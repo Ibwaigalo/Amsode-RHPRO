@@ -2,6 +2,7 @@
 import { Users, Calendar, AlertCircle, AlertTriangle, DollarSign, TrendingUp, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
+import ExpiringContractsWidget from './ExpiringContractsWidget';
 
 const DashboardCharts = dynamic(
   () => import('./DashboardCharts'),
@@ -170,34 +171,9 @@ export default function DashboardClient({ stats, user, role, chartsData }: { sta
         )}
       </motion.div>
 
-      {/* Contract Alerts & Global Payroll */}
-      {isAdmin && chartsData && chartsData.contractAlerts && chartsData.contractAlerts.length > 0 && (
-        <motion.div variants={itemVariants}>
-          <div className="card border-red-200 dark:border-red-800/50">
-            <h2 className="text-sm sm:text-base font-semibold text-red-700 dark:text-red-300 mb-3 sm:mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">Alertes Fin de Contrat</span>
-              <span className="sm:hidden">Alertes Contrat</span>
-              <span className="bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full text-xs">{chartsData.contractAlerts.length}</span>
-            </h2>
-            <div className="space-y-2 max-h-48 sm:max-h-none overflow-y-auto">
-              {chartsData.contractAlerts.map(alert => {
-                const daysLeft = getDaysRemaining(alert.endDate);
-                return (
-                  <div key={alert.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white text-sm">{alert.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{alert.contractType} - {formatDate(alert.endDate)}</p>
-                    </div>
-                    <span className={`text-sm font-medium self-start sm:self-auto ${daysLeft <= 30 ? 'text-red-600' : 'text-orange-600'}`}>
-                      {daysLeft}j
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </motion.div>
+      {/* Contract Alerts - Nouveau Widget */}
+      {isAdmin && (
+        <ExpiringContractsWidget daysThreshold={30} />
       )}
 
       {/* Global Payroll */}

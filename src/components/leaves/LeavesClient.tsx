@@ -140,6 +140,21 @@ export default function LeavesClient({ requests, balances, userRole, currentEmpl
     }
   };
 
+  const handleReturnFromLeave = async (employeeId: string, employeeName: string) => {
+    if (!confirm(`${employeeName} est de retour de congé ?`)) return;
+    try {
+      const res = await fetch(`/api/employees/${employeeId}/return`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      toast.success(data.message || "Employé remis comme actif");
+      router.refresh();
+    } catch (e: any) {
+      toast.error(e.message || "Une erreur est survenue");
+    }
+  };
+
   const canApprove = (reqStatus: string, role: string) => {
     if (role === "MANAGER") {
       return reqStatus === "PENDING";
@@ -488,6 +503,14 @@ export default function LeavesClient({ requests, balances, userRole, currentEmpl
                           </div>
                         ) : req.status === "PENDING" && userRole === "ADMIN_RH" ? (
                           <span className="text-xs text-gray-400" title="En attente validation manager">En attente manager</span>
+                        ) : req.status === "APPROVED" && isOnLeave && userRole === "ADMIN_RH" ? (
+                          <button 
+                            onClick={() => handleReturnFromLeave(req.employeeId, `${req.employeeName} ${req.employeeLastName}`)}
+                            className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg transition-colors"
+                            title="Marquer comme revenu de congé"
+                          >
+                            Retour
+                          </button>
                         ) : null}
                       </td>
                     )}

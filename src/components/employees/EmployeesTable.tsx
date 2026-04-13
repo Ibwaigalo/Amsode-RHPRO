@@ -43,6 +43,7 @@ interface Employee {
   positionId?: string | null;
   managerId?: string | null;
   manager?: { id: string; firstName: string; lastName: string } | null;
+  workStatus?: string | null;
 }
 
 interface EmployeeTableRow {
@@ -58,6 +59,7 @@ interface EmployeeTableRow {
   contractEnd: string | null;
   baseSalary: string;
   isActive: boolean;
+  workStatus?: string | null;
   departmentName: string | null;
   positionTitle: string | null;
   managerName: string | null;
@@ -91,6 +93,19 @@ const CONTRACT_COLORS: Record<string, string> = {
   CDD:        "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
   STAGE:      "bg-blue-100  text-blue-800  dark:bg-blue-900/30  dark:text-blue-300",
   CONSULTANT: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+};
+
+const WORK_STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+  ACTIVE: { label: "Actif", color: "text-green-600", bgColor: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
+  ON_TRIAL: { label: "Essai", color: "text-yellow-600", bgColor: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" },
+  EN_CONGE: { label: "Congé", color: "text-blue-600", bgColor: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
+  SUSPENDED: { label: "Suspendu", color: "text-orange-600", bgColor: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" },
+  RESIGNED: { label: "Démission", color: "text-red-600", bgColor: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" },
+  TERMINATED: { label: "Renvoyé", color: "text-red-700", bgColor: "bg-red-200 text-red-900 dark:bg-red-900/30 dark:text-red-300" },
+  CONTRACT_ENDED: { label: "Fin contrat", color: "text-gray-600", bgColor: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300" },
+  JOB_ABANDONMENT: { label: "Abandon", color: "text-purple-600", bgColor: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
+  MUTUAL_AGREEMENT: { label: "Rupture conv.", color: "text-indigo-600", bgColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300" },
+  RETIRED: { label: "Retraité", color: "text-teal-600", bgColor: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300" },
 };
 
 const formatSalary = (s: string) =>
@@ -175,11 +190,12 @@ function ViewModal({
           <div className="flex justify-center">
             <span className={cn(
               "text-sm px-4 py-1.5 rounded-full font-medium",
-              employee.isActive
+              WORK_STATUS_CONFIG[employee.workStatus || "ACTIVE"]?.bgColor ||
+              (employee.isActive
                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300")
             )}>
-              {employee.isActive ? "&#10003; Actif" : "&#10007; Inactif"}
+              {WORK_STATUS_CONFIG[employee.workStatus || "ACTIVE"]?.label || (employee.isActive ? "Actif" : "Inactif")}
             </span>
           </div>
         </div>
@@ -428,9 +444,10 @@ const EmployeeRow = memo(function EmployeeRow({
         <td>
           <span className={cn(
             "text-xs px-2 py-1 rounded-full font-medium",
-            emp.isActive ? "badge-approved" : "badge-rejected"
+            WORK_STATUS_CONFIG[emp.workStatus || "ACTIVE"]?.bgColor ||
+            (emp.isActive ? "badge-approved" : "badge-rejected")
           )}>
-            {emp.isActive ? "Actif" : "Inactif"}
+            {WORK_STATUS_CONFIG[emp.workStatus || "ACTIVE"]?.label || (emp.isActive ? "Actif" : "Inactif")}
           </span>
         </td>
         <td>
@@ -477,9 +494,10 @@ const EmployeeRow = memo(function EmployeeRow({
               </div>
               <span className={cn(
                 "text-xs px-2 py-1 rounded-full font-medium flex-shrink-0",
-                emp.isActive ? "badge-approved" : "badge-rejected"
+                WORK_STATUS_CONFIG[emp.workStatus || "ACTIVE"]?.bgColor ||
+                (emp.isActive ? "badge-approved" : "badge-rejected")
               )}>
-                {emp.isActive ? "Actif" : "Inactif"}
+                {WORK_STATUS_CONFIG[emp.workStatus || "ACTIVE"]?.label || (emp.isActive ? "Actif" : "Inactif")}
               </span>
             </div>
             
