@@ -15,7 +15,8 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "setup": "npm cache clean --force && npm install",
-    "fresh": "npx rimraf .next node_modules && npm install && npm run dev"
+    "fresh": "npx rimraf .next node_modules && npm install && npm run dev",
+    "keep-alive:test": "npx tsx scripts/test-keep-alive.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.4.2",
