@@ -82,9 +82,8 @@ interface Employee {
   positionId?: string | null;
   managerId?: string | null;
   manager?: { id: string; firstName: string; lastName: string } | null;
-  workStatus?: string | null;
-  statusDate?: string | null;
   statusReason?: string | null;
+  workStatus?: string | null;
 }
 
 interface Props {

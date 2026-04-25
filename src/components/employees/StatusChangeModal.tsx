@@ -8,7 +8,7 @@ interface Employee {
   employeeNumber: string;
   firstName: string;
   lastName: string;
-  workStatus: string | null;
+  workStatus?: string | null;
   department?: { name: string };
   position?: { title: string };
 }
