@@ -69,7 +69,7 @@ interface Employee {
   contractType: string;
   startDate: string;
   endDate: string | null;
-  globalSalaryCost: string;
+  globalSalaryCost?: string | null;
   isActive: boolean;
   leaveBalance: number | null;
   emergencyContact: string | null;

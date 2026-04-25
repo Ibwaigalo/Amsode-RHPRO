@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
           .update(employees)
           .set({ 
             workStatus: "EN_CONGE",
-            statusDate: new Date(),
+            statusDate: new Date().toISOString().split("T")[0],
             updatedAt: new Date()
           })
           .where(eq(employees.id, emp.id));

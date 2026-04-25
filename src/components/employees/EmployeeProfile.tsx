@@ -25,7 +25,6 @@ interface Employee {
   contractType: string;
   startDate: string;
   endDate: string | null;
-  globalSalaryCost: string;
   globalSalaryCost?: string | null;
   statutMatrimonial?: string | null;
   nbEnfantsCharge?: number | null;

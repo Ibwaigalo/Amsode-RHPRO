@@ -30,7 +30,7 @@ interface Employee {
   contractType: string;
   startDate: string;
   endDate: string | null;
-  globalSalaryCost: string;
+  globalSalaryCost?: string | null;
   isActive: boolean;
   leaveBalance: number | null;
   emergencyContact: string | null;
@@ -57,7 +57,7 @@ interface EmployeeTableRow {
   contractType: string;
   contractStart: string;
   contractEnd: string | null;
-  globalSalaryCost: string;
+  globalSalaryCost?: string | null;
   isActive: boolean;
   workStatus?: string | null;
   departmentName: string | null;
@@ -110,7 +110,7 @@ const WORK_STATUS_CONFIG: Record<string, { label: string; color: string; bgColor
   RETIRED: { label: "Retraité", color: "text-teal-600", bgColor: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300" },
 };
 
-const getSalary = (emp: EmployeeTableRow) => emp.globalSalaryCost || emp.baseSalary;
+const getSalary = (emp: EmployeeTableRow) => emp.globalSalaryCost || "";
 
 const formatSalary = (s: string) =>
   new Intl.NumberFormat("fr-ML", {
