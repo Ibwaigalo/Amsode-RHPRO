@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { employees, users } from "@/lib/schema";
-import { eq, like, desc } from "drizzle-orm";
+import { eq, like, desc, asc } from "drizzle-orm";
 import { z } from "zod";
 import { hash } from "bcryptjs";
 import { randomBytes } from "crypto";
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
   let list: any[] = [];
 
   if (role === "ADMIN_RH" || role === "PRESIDENT") {
-    list = await db.select().from(employees).where(eq(employees.isActive, true));
+    list = await db.select().from(employees).where(eq(employees.isActive, true)).orderBy(asc(employees.lastName), asc(employees.firstName));
   } else if (role === "MANAGER" && user?.employeeId) {
     list = await db.select().from(employees).where(
       eq(employees.managerId, user.employeeId)
