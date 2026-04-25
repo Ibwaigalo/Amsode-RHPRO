@@ -110,12 +110,12 @@ const WORK_STATUS_CONFIG: Record<string, { label: string; color: string; bgColor
   RETIRED: { label: "Retraité", color: "text-teal-600", bgColor: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300" },
 };
 
-const getSalary = (emp: EmployeeTableRow) => emp.globalSalaryCost || "";
+const getSalary = (emp: EmployeeTableRow) => emp.globalSalaryCost || "0";
 
 const formatSalary = (s: string) =>
   new Intl.NumberFormat("fr-ML", {
     style: "currency", currency: "XOF", maximumFractionDigits: 0,
-  }).format(parseFloat(s));
+  }).format(parseFloat(s) || 0);
 
 const isExpiringSoon = (endDate: string | null): boolean => {
   if (!endDate) return false;

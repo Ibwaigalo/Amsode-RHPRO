@@ -430,21 +430,21 @@ export function EmployeeProfile({ employee, onClose, userRole }: Props) {
               <div className="col-span-2">
                 <p className="text-xs text-gray-500 mb-1">Coût salarial global (FCFA)</p>
                 <p className="text-xl font-bold text-green-600">
-                  {formatSalary(employee.globalSalaryCost)}
+                  {formatSalary(employee.globalSalaryCost || "0")}
                 </p>
               </div>
             </div>
           </div>
 
           {/* AJOUT: Charges Breakdown */}
-          {parseFloat(employee.globalSalaryCost) > 0 && (
+          {parseFloat(employee.globalSalaryCost || "0") > 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-6">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Award className="w-5 h-5 text-amber-600" />
                 Détail Charges Sociales Mali 2026
               </h3>
               <ChargeCalculator
-                salaryBrut={parseFloat(employee.globalSalaryCost)}
+                salaryBrut={parseFloat(employee.globalSalaryCost || "0")}
                 statutMatrimonial={(employee.statutMatrimonial as any) || 'Célibataire'}
                 nbEnfantsCharge={employee.nbEnfantsCharge || 0}
                 showDetails={true}
