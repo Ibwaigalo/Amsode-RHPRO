@@ -28,7 +28,6 @@ const updateSchema = z.object({
   contractEnd: z.string().optional(),
   departmentId: z.string().uuid().optional().or(z.literal("")),
   managerId: z.string().uuid().optional().or(z.literal("")),
-  baseSalary: z.string().optional(),
   globalSalaryCost: z.string().optional(),
   role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).optional(),
   isActive: z.boolean().optional(),
@@ -103,8 +102,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.contractEnd !== undefined) updateData.endDate = parsed.data.contractEnd || null;
     if (parsed.data.departmentId !== undefined) updateData.departmentId = parsed.data.departmentId || null;
     if (parsed.data.managerId !== undefined) updateData.managerId = parsed.data.managerId || null;
-    if (parsed.data.baseSalary !== undefined) updateData.baseSalary = parsed.data.baseSalary;
-    if (parsed.data.globalSalaryCost !== undefined) updateData.globalSalaryCost = parsed.data.globalSalaryCost || null;
+    if (parsed.data.globalSalaryCost !== undefined) {
+      updateData.baseSalary = parsed.data.globalSalaryCost;
+      updateData.globalSalaryCost = parsed.data.globalSalaryCost || null;
+    }
     if (parsed.data.isActive !== undefined) updateData.isActive = parsed.data.isActive;
     if (parsed.data.role !== undefined) updateData.role = parsed.data.role;
     if (parsed.data.bloodGroup !== undefined) updateData.bloodGroup = parsed.data.bloodGroup || null;

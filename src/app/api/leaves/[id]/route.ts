@@ -97,7 +97,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         await db
           .update(employees)
           .set({ 
-            workStatus: "EN_CONGE",
+            leaveStartDate: leave.startDate,
+            leaveEndDate: leave.endDate,
             updatedAt: new Date()
           })
           .where(eq(employees.id, leave.employeeId));

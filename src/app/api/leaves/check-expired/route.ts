@@ -2,61 +2,80 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { employees, leaveRequests } from "@/lib/schema";
-import { eq, and, lte, isNull, or } from "drizzle-orm";
+import { eq, and, isNull, or, isNotNull } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    if (!session) return NextResponse.json({ error: "Non autorización" }, { status: 401 });
 
     const role = (session.user as any)?.role;
     if (!["ADMIN_RH", "PRESIDENT", "MANAGER"].includes(role)) {
-      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
     }
 
     const today = new Date().toISOString().split("T")[0];
     
-    const employeesOnLeave = await db
+    const employeesWithLeaveDates = await db
       .select()
       .from(employees)
-      .where(eq(employees.workStatus, "EN_CONGE"));
+      .where(
+        and(
+          isNotNull(employees.leaveStartDate),
+          isNotNull(employees.leaveEndDate)
+        )
+      );
 
-    const updatedEmployees: string[] = [];
+    const startedEmployees: string[] = [];
+    const endedEmployees: string[] = [];
 
-    for (const emp of employeesOnLeave) {
-      const approvedLeave = await db.query.leaveRequests.findFirst({
-        where: and(
-          eq(leaveRequests.employeeId, emp.id),
-          eq(leaveRequests.status, "APPROVED" as any)
-        ),
-        orderBy: (leaveRequests, { desc }) => [desc(leaveRequests.endDate)],
-      });
-
-      if (approvedLeave && approvedLeave.endDate) {
-        const endDate = new Date(approvedLeave.endDate).toISOString().split("T")[0];
+    for (const emp of employeesWithLeaveDates) {
+      const leaveStart = emp.leaveStartDate;
+      const leaveEnd = emp.leaveEndDate;
+      
+      if (!leaveStart || !leaveEnd) continue;
+      
+      const startDate = new Date(leaveStart).toISOString().split("T")[0];
+      const endDate = new Date(leaveEnd).toISOString().split("T")[0];
+      
+      if (startDate <= today && emp.workStatus !== "EN_CONGE") {
+        await db
+          .update(employees)
+          .set({ 
+            workStatus: "EN_CONGE",
+            statusDate: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(employees.id, emp.id));
         
-        if (endDate < today) {
-          await db
-            .update(employees)
-            .set({ 
-              workStatus: "ACTIVE",
-              updatedAt: new Date()
-            })
-            .where(eq(employees.id, emp.id));
-          
-          updatedEmployees.push(`${emp.firstName} ${emp.lastName}`);
-        }
+        startedEmployees.push(`${emp.firstName} ${emp.lastName}`);
+      }
+      
+      if (today > endDate && emp.workStatus === "EN_CONGE") {
+        await db
+          .update(employees)
+          .set({ 
+            workStatus: "ACTIVE",
+            leaveStartDate: null,
+            leaveEndDate: null,
+            updatedAt: new Date()
+          })
+          .where(eq(employees.id, emp.id));
+        
+        endedEmployees.push(`${emp.firstName} ${emp.lastName}`);
       }
     }
 
     return NextResponse.json({
       success: true,
-      checked: employeesOnLeave.length,
-      updated: updatedEmployees.length,
-      updatedEmployees,
+      checked: employeesWithLeaveDates.length,
+      started: startedEmployees.length,
+      ended: endedEmployees.length,
+      startedEmployees,
+      endedEmployees,
     });
   } catch (error) {
     console.error("Check expired leaves error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json({ error: "Error del servidor" }, { status: 500 });
   }
 }

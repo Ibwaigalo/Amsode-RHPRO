@@ -182,7 +182,7 @@ export default function PayslipsViewer({ periodId, periodLabel, onClose }: Props
                   
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Salaire de base</span>
+                      <span className="text-gray-600 dark:text-gray-400">Coût salarial global</span>
                       <span className="font-medium">{formatXOF(parseFloat(selectedPayslip.baseSalary || "0"))}</span>
                     </div>
                     <div className="flex justify-between">

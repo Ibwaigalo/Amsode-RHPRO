@@ -34,8 +34,7 @@ const employeeSchema = z.object({
   departmentId: z.string().optional(),
   positionId: z.string().optional(),
   managerId: z.string().optional(),
-  baseSalary: z.string().min(1, "Salaire requis"),
-  globalSalaryCost: z.string().optional(),
+  globalSalaryCost: z.string().min(1, "Coût salarial global requis"),
   role: z.enum(["EMPLOYE", "MANAGER", "ADMIN_RH"]).default("EMPLOYE"),
   createAccount: z.boolean().default(true),
   // Nouveaux champs
@@ -75,7 +74,7 @@ export function AddEmployeeButton({ departments, positions, managers }: Props) {
     },
   });
 
-  const watchedBaseSalary = watch("baseSalary");
+  const watchedGlobalSalaryCost = watch("globalSalaryCost");
   const watchedStatut = watch("statutMatrimonial");
   const watchedEnfants = watch("nbEnfantsCharge");
 
@@ -106,7 +105,7 @@ export function AddEmployeeButton({ departments, positions, managers }: Props) {
   };
 
   // Parser le salaire pour affichage du calculateur
-  const salaryValue = parseFloat(watchedBaseSalary) || 0;
+  const salaryValue = parseFloat(watchedGlobalSalaryCost) || 0;
 
   if (!open) {
     return (
@@ -341,28 +340,19 @@ export function AddEmployeeButton({ departments, positions, managers }: Props) {
               </div>
             </div>
 
-            {/* Salaire et Aperçu côte à côte */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Salaire de base (FCFA) *</label>
-                  <input {...register("baseSalary")} type="number" min="0"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
-                    placeholder="250000" />
-                  {errors.baseSalary && <p className="text-xs text-red-500 mt-1">{errors.baseSalary.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Coût salarial global (FCFA)</label>
-                  <input {...register("globalSalaryCost")} type="number" min="0"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
-                    placeholder="Optionnel" />
-                  <span className="text-xs text-gray-400 mt-1 block">Salaire + charges patronales</span>
-                </div>
+            {/* Salaire avec Aperçu intégré */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Coût salarial global (FCFA) *</label>
+                <input {...register("globalSalaryCost")} type="number" min="0"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]"
+                  placeholder="250000" />
+                {errors.globalSalaryCost && <p className="text-xs text-red-500 mt-1">{errors.globalSalaryCost.message}</p>}
               </div>
               {salaryValue > 0 && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
-                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">
-                    💰 Aperçu salaire net (Mali 2026)
+                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                    💰 Net estimé (Mali 2026)
                   </h4>
                   <ChargeCalculatorInline
                     salaryBrut={salaryValue}

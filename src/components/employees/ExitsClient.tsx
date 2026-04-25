@@ -25,7 +25,7 @@ interface Employee {
   contractType: string;
   startDate: string;
   endDate: string | null;
-  baseSalary: string;
+  globalSalaryCost: string;
   isActive: boolean;
   workStatus: string | null;
   statusDate: string | null;

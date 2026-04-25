@@ -30,7 +30,7 @@ interface Employee {
   contractType: string;
   startDate: string;
   endDate: string | null;
-  baseSalary: string;
+  globalSalaryCost: string;
   isActive: boolean;
   leaveBalance: number | null;
   emergencyContact: string | null;
@@ -57,7 +57,7 @@ interface EmployeeTableRow {
   contractType: string;
   contractStart: string;
   contractEnd: string | null;
-  baseSalary: string;
+  globalSalaryCost: string;
   isActive: boolean;
   workStatus?: string | null;
   departmentName: string | null;
@@ -77,6 +77,7 @@ interface Props {
   onView?: (employee: any) => void;
   onEdit?: (employee: any) => void;
   onDelete?: (employee: any) => void;
+  onStatus?: (employee: any) => void;
   managers?: { id: string; firstName: string; lastName: string }[];
 }
 
@@ -86,6 +87,7 @@ interface TableRowProps {
   onView: (e: any) => void;
   onEdit: (e: any) => void;
   onDelete: (e: any) => void;
+  onStatus?: (e: any) => void;
 }
 
 const CONTRACT_COLORS: Record<string, string> = {
@@ -107,6 +109,8 @@ const WORK_STATUS_CONFIG: Record<string, { label: string; color: string; bgColor
   MUTUAL_AGREEMENT: { label: "Rupture conv.", color: "text-indigo-600", bgColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300" },
   RETIRED: { label: "Retraité", color: "text-teal-600", bgColor: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300" },
 };
+
+const getSalary = (emp: EmployeeTableRow) => emp.globalSalaryCost || emp.baseSalary;
 
 const formatSalary = (s: string) =>
   new Intl.NumberFormat("fr-ML", {
@@ -181,9 +185,9 @@ function ViewModal({
           </div>
 
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-between">
-            <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">Salaire de base</span>
+            <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">Coût salarial global (FCFA)</span>
             <span className="text-lg font-bold text-blue-800 dark:text-blue-200">
-              {formatSalary(employee.baseSalary)}
+              {formatSalary(getSalary(employee))}
             </span>
           </div>
 
@@ -223,7 +227,7 @@ function EditModal({
     phone:        employee.phone ?? "",
     contractType: employee.contractType,
     contractEnd:  employee.contractEnd ?? "",
-    baseSalary:   employee.baseSalary,
+    globalSalaryCost:   employee.globalSalaryCost,
   });
 
   const handleChange = useCallback(
@@ -247,7 +251,7 @@ function EditModal({
           phone: form.phone,
           contractType: form.contractType,
           contractEnd: form.contractEnd,
-          baseSalary: form.baseSalary,
+          globalSalaryCost: form.globalSalaryCost,
         }),
       });
       if (!res.ok) throw new Error((await res.json()).error ?? "Erreur serveur");
@@ -282,7 +286,7 @@ function EditModal({
             { name: "lastName",   label: "Nom",       type: "text",   placeholder: "Coulibaly" },
             { name: "email",      label: "Email",     type: "email",  placeholder: "a.coulibaly@amsode.ml" },
             { name: "phone",      label: "T&#233;l&#233;phone", type: "tel",    placeholder: "+223 70 00 00 00" },
-            { name: "baseSalary", label: "Salaire (FCFA)", type: "number", placeholder: "300000" },
+            { name: "globalSalaryCost", label: "Coût salarial global (FCFA)", type: "number", placeholder: "300000" },
             { name: "contractEnd", label: "Fin contrat", type: "date", placeholder: "" },
           ].map(field => (
             <div key={field.name} className={field.name === "email" ? "col-span-2" : ""}>
@@ -394,6 +398,7 @@ const EmployeeRow = memo(function EmployeeRow({
   onView,
   onEdit,
   onDelete,
+  onStatus,
 }: TableRowProps) {
   return (
     <>
@@ -438,7 +443,7 @@ const EmployeeRow = memo(function EmployeeRow({
         </td>
         <td>
           <span className="text-sm font-medium text-gray-900 dark:text-white">
-            {formatSalary(emp.baseSalary)}
+            {formatSalary(getSalary(emp))}
           </span>
         </td>
         <td>
@@ -463,6 +468,12 @@ const EmployeeRow = memo(function EmployeeRow({
               className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
               title="Modifier">
               <Edit2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onStatus?.(emp)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+              title="Changer le statut">
+              <span className="w-4 h-4 flex items-center justify-center text-xs font-bold">↻</span>
             </button>
             <button
               onClick={() => onDelete?.(emp)}
@@ -520,8 +531,8 @@ const EmployeeRow = memo(function EmployeeRow({
                 </span>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Salaire</p>
-                <p className="font-medium text-gray-900 dark:text-white">{formatSalary(emp.baseSalary)}</p>
+                <p className="text-xs text-gray-500">Coût salarial</p>
+                <p className="font-medium text-gray-900 dark:text-white">{formatSalary(getSalary(emp))}</p>
               </div>
             </div>
             
@@ -543,6 +554,12 @@ const EmployeeRow = memo(function EmployeeRow({
                 className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
                 title="Modifier">
                 <Edit2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onStatus?.(emp)}
+                className="p-2 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+                title="Changer le statut">
+                <span className="w-4 h-4 flex items-center justify-center text-xs font-bold">↻</span>
               </button>
               <button
                 onClick={() => onDelete?.(emp)}
@@ -567,6 +584,7 @@ export function EmployeesTable({
   searchParams,
   onView,
   onEdit,
+  onStatus,
   onDelete,
   managers,
 }: Props) {
@@ -586,6 +604,7 @@ export function EmployeesTable({
 
   const handleView   = useCallback((emp: Employee) => setModal({ type: "view",   employee: emp as unknown as EmployeeTableRow, fullEmployee: emp }), []);
   const handleEdit   = useCallback((emp: Employee) => setModal({ type: "edit",   employee: emp as unknown as EmployeeTableRow, fullEmployee: emp }), []);
+  const handleStatus  = useCallback((emp: Employee) => onStatus?.(emp), [onStatus]);
   const handleDelete = useCallback((emp: Employee) => setModal({ type: "delete", employee: emp as unknown as EmployeeTableRow, fullEmployee: emp }), []);
 
   const updateQuery = useCallback((params: Record<string, string>) => {
@@ -716,6 +735,7 @@ export function EmployeesTable({
                     emp={emp as unknown as EmployeeTableRow}
                     onView={handleView}
                     onEdit={handleEdit}
+                    onStatus={handleStatus}
                     onDelete={handleDelete}
                     fullEmployee={emp}
                   />

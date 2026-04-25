@@ -39,7 +39,7 @@ const employeeSchema = z.object({
   fieldOfStudy: z.string().optional(),
   firstContractDate: z.string().optional(),
   contractRenewals: z.number().min(0).optional(),
-  globalSalaryCost: z.string().optional(),
+  globalSalaryCost: z.string().min(1, "Coût salarial global requis"),
   inpsNumber: z.string().optional(),
   amoNumber: z.string().optional(),
   departureReason: z.string().optional(),
@@ -69,8 +69,7 @@ interface Employee {
   contractType: string;
   startDate: string;
   endDate: string | null;
-  baseSalary: string;
-  globalSalaryCost?: string | null;
+  globalSalaryCost: string;
   isActive: boolean;
   role?: string | null;
   departmentId?: string | null;
@@ -125,8 +124,7 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
       contractEnd: employee.endDate ? employee.endDate.split("T")[0] : "",
       departmentId: employee.departmentId || "",
       managerId: employee.managerId || "",
-      baseSalary: employee.baseSalary,
-      globalSalaryCost: employee.globalSalaryCost || "",
+      globalSalaryCost: employee.globalSalaryCost || employee.globalSalaryCost || "",
       role: (employee.role as "EMPLOYE" | "MANAGER" | "ADMIN_RH") || "EMPLOYE",
       isActive: employee.isActive,
       bloodGroup: employee.bloodGroup || "",
@@ -140,10 +138,10 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
     },
   });
 
-  const watchedBaseSalary = watch("baseSalary");
+  const watchedGlobalSalaryCost = watch("globalSalaryCost");
   const watchedStatut = watch("statutMatrimonial");
   const watchedEnfants = watch("nbEnfantsCharge");
-  const salaryValue = parseFloat(watchedBaseSalary || "0") || 0;
+  const salaryValue = parseFloat(watchedGlobalSalaryCost || "0") || 0;
 
   const onSubmit = async (data: EmployeeForm) => {
     setIsSubmitting(true);
@@ -450,15 +448,10 @@ export function EditEmployeeModal({ employee, departments, positions, managers, 
               </div>
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Coût salarial global (FCFA)</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Coût salarial global (FCFA) *</label>
               <input {...register("globalSalaryCost")} type="number" min="0"
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Salaire de base (FCFA) *</label>
-              <input {...register("baseSalary")} type="number" min="0"
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-[#0090D1]" />
-              {errors.baseSalary && <p className="text-xs text-red-500 mt-1">{errors.baseSalary.message}</p>}
+              {errors.globalSalaryCost && <p className="text-xs text-red-500 mt-1">{errors.globalSalaryCost.message}</p>}
             </div>
             <div className="col-span-2">
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Rôle dans le système</label>

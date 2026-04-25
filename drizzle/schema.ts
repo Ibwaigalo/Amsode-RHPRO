@@ -129,6 +129,8 @@ export const employees = pgTable('employees', {
   workStatus: workStatusEnum('work_status').default('ACTIVE'),
   statusDate: date('status_date'),
   statusReason: text('status_reason'),
+  leaveStartDate: date('leave_start_date'),
+  leaveEndDate: date('leave_end_date'),
   noticePeriodEnd: date('notice_period_end'),
   exitInterviewDone: boolean('exit_interview_done').default(false),
   // Coût salarial global (inclut tous les avantages)

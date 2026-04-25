@@ -42,6 +42,14 @@ const EditEmployeeModal = dynamic(
   }
 );
 
+const StatusChangeModal = dynamic(
+  () => import("./StatusChangeModal").then(m => m.StatusChangeModal),
+  { 
+    loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><div className="bg-white p-6 rounded-lg">Chargement...</div></div>,
+    ssr: false 
+  }
+);
+
 interface Employee {
   id: string;
   employeeNumber: string;
@@ -61,7 +69,7 @@ interface Employee {
   contractType: string;
   startDate: string;
   endDate: string | null;
-  baseSalary: string;
+  globalSalaryCost: string;
   isActive: boolean;
   leaveBalance: number | null;
   emergencyContact: string | null;
@@ -74,6 +82,9 @@ interface Employee {
   positionId?: string | null;
   managerId?: string | null;
   manager?: { id: string; firstName: string; lastName: string } | null;
+  workStatus?: string | null;
+  statusDate?: string | null;
+  statusReason?: string | null;
 }
 
 interface Props {
@@ -87,6 +98,7 @@ interface Props {
 export default function EmployeesClient({ employees, departments, positions, userRole, managers = [] }: Props) {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [statusEmployee, setStatusEmployee] = useState<Employee | null>(null);
   const [search, setSearch] = useState("");
   const [filterProject, setFilterProject] = useState("");
   const [filterPosition, setFilterPosition] = useState("");
@@ -114,6 +126,36 @@ export default function EmployeesClient({ employees, departments, positions, use
         onSuccess={() => {
           setEditingEmployee(null);
           router.refresh();
+        }}
+      />
+    );
+  }
+
+  if (statusEmployee) {
+    return (
+      <StatusChangeModal
+        employee={statusEmployee}
+        onClose={() => setStatusEmployee(null)}
+        onConfirm={async (employeeId, newStatus, data) => {
+          try {
+            const res = await fetch(`/api/employees/${employeeId}/status`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...data, workStatus: newStatus }),
+            });
+            const result = await res.json();
+            if (!res.ok) {
+              toast.error(result.error || "Erreur lors du changement de statut");
+              return false;
+            }
+            toast.success("Statut modifié avec succès");
+            setStatusEmployee(null);
+            router.refresh();
+            return true;
+          } catch (e: any) {
+            toast.error("Erreur: " + (e.message || "Une erreur est survenue"));
+            return false;
+          }
         }}
       />
     );
@@ -157,6 +199,11 @@ export default function EmployeesClient({ employees, departments, positions, use
   const handleEdit = (employee: any) => {
     const fullEmp = employees.find(e => e.id === employee.id);
     if (fullEmp) setEditingEmployee(fullEmp);
+  };
+
+  const handleStatus = (employee: any) => {
+    const fullEmp = employees.find(e => e.id === employee.id);
+    if (fullEmp) setStatusEmployee(fullEmp);
   };
 
   const handleDelete = async (employee: any) => {
@@ -295,6 +342,7 @@ export default function EmployeesClient({ employees, departments, positions, use
         searchParams={{}}
         onView={handleView}
         onEdit={handleEdit}
+        onStatus={handleStatus}
         onDelete={handleDelete}
         managers={managers}
       />
