@@ -36,6 +36,7 @@
     "date-fns": "^2.30.0",
     "drizzle-orm": "^0.33.0",
     "framer-motion": "^11.3.31",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.436.0",
     "next": "14.2.5",
     "next-auth": "^5.0.0-beta.20",
